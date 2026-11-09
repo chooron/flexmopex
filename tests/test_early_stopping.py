@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Early-stopping and checkpoint-selection verification for flexmopexv2.
+"""Early-stopping and checkpoint-selection verification for flexmopex.
 
 This test runs the REAL objects, not reimplementations:
 
