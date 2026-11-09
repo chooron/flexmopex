@@ -1,0 +1,7 @@
+{
+  "loss_linthresh": 0.02,
+  "loss_ylim": [
+    -0.3,
+    1.0
+  ]
+}

@@ -1,0 +1,12 @@
+E2 teacher (Candidate E-S0, seed 42)
+
+origin : /autodl-fs/data/dmg_ic_workspace/flexmopexv2_results/results/normal/full/ref/seed_42_s0
+         on the training server (connect.nmb2.seetacloud.com)
+files  : config_snapshot.json
+         model/best_checkpoint.pt
+         model/normalization_statistics.json
+
+sha256 :
+e90deeab8463870bf1e068c76c3552896b578c32f3eb15f4a3a8b60bbf42bb79  inputs/teacher_s0/config_snapshot.json
+39e93db2961f3d2583c748dda2a4bd87c1e7f8f1de483cf583f68aa93f908e28  inputs/teacher_s0/model/best_checkpoint.pt
+5d8ee37112891693a0542df4869cfcb685e1cf6198ad980dcfe33416489b1b52  inputs/teacher_s0/model/normalization_statistics.json

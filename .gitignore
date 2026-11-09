@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+outputs/
+.ipynb_checkpoints/
+
+# large inputs that are documented, not shipped
+data/camels_dataset
+inputs/trained/**
+!inputs/trained/README.md
+inputs/synthetic/**
+!inputs/synthetic/README.md
+inputs/synthetic_checkpoints/

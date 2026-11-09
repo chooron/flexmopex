@@ -1,0 +1,142 @@
+# Flex-MOPEX reference configuration (lambda = 0.007)
+# Physics: MOPEX with structure gates; semantics RF_S0.
+# preserve_phy_model keeps this class through apply_runtime_overrides.
+preserve_phy_model: true
+basin_manifest: data/gage_id.npy
+basin_count: 671
+# =============================================================================
+# Flex-MOPEX Formal 671 Benchmark: Flex (lambda = 0.007)
+#
+# Method: Counterfactual Structural Learning with Pure-Attribute Nonlinear Structure Encoder
+# - Interception: liquid-only, shared PET budget
+# - Architecture: LearnedStructureNetPureAttrEncoder x35 -> 35->128->64->8
+# - Supervision: Basin-specific Counterfactual Supervision (DeltaJ = J_OFF - J_ON)
+# - Soft-target: q = sigmoid(DeltaJ / T) with process-wise robust median scale T
+# - Complexity penalty: lambda = 0.007
+# - Optimization: Single Unified Adadelta (lr=1.0) over all 16 parameter tensors
+# - Dataset: CAMELS-671 (671 basins)
+# =============================================================================
+
+defaults:
+  - _self_
+  - hydra: settings
+  - observations: camels_671
+
+## General -------------------------------#
+mode: train # train, test, train_test, simulation
+random_seed: 42
+device: cpu
+gpu_id: 0
+
+data_loader: HydroLoader
+data_sampler: HydroSampler
+trainer: CFTrainer
+save_output: true
+save_path: outputs/flex_lambda0007_seed42/
+trained_model: outputs/flex_lambda0007_seed42/model/
+
+## Training ------------------------------#
+train:
+  start_time: 1980/10/01
+  end_time: 1995/09/30
+  target: [streamflow]
+  optimizer: Adadelta
+  batch_size: 100
+  epochs: 100
+  start_epoch: 0
+  save_epoch: 1
+  learning_rate: 1.0
+  lr_scheduler: None
+  lr_scheduler_params:
+    step_size: 10
+    gamma: 0.5
+
+## Evaluation -------------------------------#
+test:
+  start_time: 1995/10/01
+  end_time: 2010/09/30
+  batch_size: 100
+  test_epoch: 100
+  split_dataset: True
+
+## Inference -------------------------------#
+simulation:
+  start_time: 2012/10/01
+  end_time: 2014/09/30
+  batch_size: 25
+
+## Loss Function -------------------------#
+loss_function:
+  model: NseDynAicBatchLoss
+  aic_alpha: 0.007
+
+## Counterfactual Supervision ----------------#
+counterfactual_supervision: true
+confidence_weighted_cf_loss: true
+cf_loss_weight: 1.0
+structure_optimizer: none
+
+## Differentiable Model -----------------------------#
+delta_model:
+  rho: 365
+
+  phy_model:
+    directory: train/models
+    model: [Mopex]
+    nmul: 16
+    warm_up: 365
+    interception_semantics: RF_S0
+    disable_compile: true
+    warm_up_states: False
+    dy_drop: 0.0
+    counterfactual_supervision: true
+    attributes: []
+    use_log_norm: []
+    nearzero: 1e-5
+    forcings: [prcp, tmean, pet]
+
+  nn_model:
+    directory: train/models
+    model: LearnedStructureNetPureAttrEncoder
+    dr: 0.5
+    hidden_size: 128
+
+    forcings: [prcp, tmean, pet]
+    attributes:
+      [
+        p_mean,
+        pet_mean,
+        p_seasonality,
+        frac_snow,
+        aridity,
+        high_prec_freq,
+        high_prec_dur,
+        low_prec_freq,
+        low_prec_dur,
+        elev_mean,
+        slope_mean,
+        area_gages2,
+        frac_forest,
+        lai_max,
+        lai_diff,
+        gvf_max,
+        gvf_diff,
+        dom_land_cover_frac,
+        dom_land_cover,
+        root_depth_50,
+        soil_depth_pelletier,
+        soil_depth_statsgo,
+        soil_porosity,
+        soil_conductivity,
+        max_water_content,
+        sand_frac,
+        silt_frac,
+        clay_frac,
+        geol_1st_class,
+        glim_1st_class_frac,
+        geol_2nd_class,
+        glim_2nd_class_frac,
+        carbonate_rocks_frac,
+        geol_porosity,
+        geol_permeability,
+      ]

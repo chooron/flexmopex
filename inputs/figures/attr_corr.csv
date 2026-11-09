@@ -1,0 +1,129 @@
+process,attribute,label,category,rho_w,rho_q
+int,area_gages2,Catchment area,Topography,0.0639181420960613,0.06733803704766377
+int,aridity,Aridity (PET/P),Climate,-0.0908756986066434,-0.16270984337414482
+int,carbonate_rocks_frac,Carbonate rock fraction,Geology,0.1284060462565768,0.11517290286786429
+int,clay_frac,Clay fraction,Soil,0.1898880164348742,0.11882189645546018
+int,dom_land_cover_frac,Dom. land-cover fraction,Vegetation,0.018981731777871,0.057676715436442184
+int,elev_mean,Mean elevation,Topography,-0.2010177820913353,-0.15976429222610627
+int,frac_forest,Forest fraction,Vegetation,0.077511715692819,0.07728624903881924
+int,frac_snow,Snow fraction,Climate,-0.1638762726814116,-0.11236605381918506
+int,geol_permeability,Geological permeability,Geology,-0.0784304213185317,-0.07992425919459979
+int,geol_porosity,Geological porosity,Geology,0.0410114881839194,0.0037954710344906863
+int,glim_1st_class_frac,GLiM first-class fraction,Geology,0.0683289973575965,0.08167126808680125
+int,glim_2nd_class_frac,GLiM second-class fraction,Geology,-0.0406847485758942,-0.05579648752289882
+int,gvf_diff,Green-veg. fraction range,Vegetation,0.2394945048157943,0.2619557100594537
+int,gvf_max,Max. green-veg. fraction,Vegetation,0.2047647592492855,0.21573197722267945
+int,high_prec_dur,High-precipitation duration,Precipitation,-0.2588375442157353,-0.2706906210826023
+int,high_prec_freq,High-precipitation frequency,Precipitation,0.0180052049183354,-0.015853293552327855
+int,lai_diff,LAI range,Vegetation,0.250068691634826,0.2582192428320395
+int,lai_max,Maximum LAI,Vegetation,0.2075383226328304,0.21297072758413596
+int,low_prec_dur,Low-precipitation duration,Precipitation,-0.2228310977296732,-0.24093546771017177
+int,low_prec_freq,Low-precipitation frequency,Precipitation,-0.0576154929478348,-0.08915719405512124
+int,max_water_content,Maximum water content,Soil,0.1024790369998797,0.10807117019314354
+int,p_mean,Mean precipitation,Climate,0.1061732705471414,0.10069244738623256
+int,p_seasonality,Precipitation seasonality,Climate,-0.103079248025239,0.1269939291195714
+int,pet_mean,Mean PET,Climate,0.1155129954803544,-0.07098032564450475
+int,root_depth_50,Root depth (50%),Vegetation,0.2075334066282011,0.1851495915451101
+int,sand_frac,Sand fraction,Soil,-0.0854430900798004,-0.030762352096017787
+int,silt_frac,Silt fraction,Soil,0.0742481918088433,0.12174572213737817
+int,slope_mean,Mean slope,Topography,-0.1406099938744049,-0.13088200947572123
+int,soil_conductivity,Soil conductivity,Soil,-0.0822872716243795,-0.09084444760796126
+int,soil_depth_pelletier,Soil depth (Pelletier),Soil,0.1069143006981663,0.08842575048701214
+int,soil_depth_statsgo,Soil depth (STATSGO),Soil,0.0475221373420377,0.05557388404000656
+int,soil_porosity,Soil porosity,Soil,0.062384630580985,0.07819561466265414
+phen,area_gages2,Catchment area,Topography,0.0897589261834111,0.10097259804155317
+phen,aridity,Aridity (PET/P),Climate,0.0199955779166968,0.038612054693532544
+phen,carbonate_rocks_frac,Carbonate rock fraction,Geology,0.022910831478125,0.025036156454107072
+phen,clay_frac,Clay fraction,Soil,0.0473531354179852,0.0408985260697231
+phen,dom_land_cover_frac,Dom. land-cover fraction,Vegetation,0.0392101839211594,0.02287326273653336
+phen,elev_mean,Mean elevation,Topography,-0.227927067370866,-0.23260091619890075
+phen,frac_forest,Forest fraction,Vegetation,-0.1024905352117569,-0.12185587608084064
+phen,frac_snow,Snow fraction,Climate,-0.0913276675544468,-0.12417004520091224
+phen,geol_permeability,Geological permeability,Geology,-0.0448307881308657,-0.044021559738821214
+phen,geol_porosity,Geological porosity,Geology,0.0205557590224186,0.053863091256459446
+phen,glim_1st_class_frac,GLiM first-class fraction,Geology,0.0701987311301821,0.0472446471831434
+phen,glim_2nd_class_frac,GLiM second-class fraction,Geology,-0.0559654680748823,-0.028132723014287656
+phen,gvf_diff,Green-veg. fraction range,Vegetation,0.2375290344548945,0.17727582547132337
+phen,gvf_max,Max. green-veg. fraction,Vegetation,0.0677774988734986,0.018538508225320067
+phen,high_prec_dur,High-precipitation duration,Precipitation,-0.2058375312469656,-0.15039662064315187
+phen,high_prec_freq,High-precipitation frequency,Precipitation,0.0904914170572722,0.11718974728310345
+phen,lai_diff,LAI range,Vegetation,0.1419163713927659,0.08621941124693755
+phen,lai_max,Maximum LAI,Vegetation,0.0891927520103636,0.04431591774997696
+phen,low_prec_dur,Low-precipitation duration,Precipitation,-0.1319674606108958,-0.07592217162195236
+phen,low_prec_freq,Low-precipitation frequency,Precipitation,0.0559840314702953,0.09661009743919903
+phen,max_water_content,Maximum water content,Soil,0.1321253198246732,0.10556677301002186
+phen,p_mean,Mean precipitation,Climate,-0.0311389445886134,-0.08403537983914788
+phen,p_seasonality,Precipitation seasonality,Climate,-0.0004434198980583,0.30894990133429084
+phen,pet_mean,Mean PET,Climate,0.0481142965352855,-0.07778333423366456
+phen,root_depth_50,Root depth (50%),Vegetation,0.0943997408330503,0.0814597271911033
+phen,sand_frac,Sand fraction,Soil,-0.0634735810159291,-0.05030398194592258
+phen,silt_frac,Silt fraction,Soil,0.0238543422416011,-0.016444920710840378
+phen,slope_mean,Mean slope,Topography,-0.2749718538054848,-0.26818034852350975
+phen,soil_conductivity,Soil conductivity,Soil,-0.0554199083932072,-0.05005227316523634
+phen,soil_depth_pelletier,Soil depth (Pelletier),Soil,0.1964977441164402,0.20643928701119055
+phen,soil_depth_statsgo,Soil depth (STATSGO),Soil,0.0895368604987022,0.07504979423273087
+phen,soil_porosity,Soil porosity,Soil,0.0987406380413407,0.0720936528256694
+snow,area_gages2,Catchment area,Topography,-0.2006478833292462,-0.19916723197209277
+snow,aridity,Aridity (PET/P),Climate,-0.2054564926488475,-0.21553874557667607
+snow,carbonate_rocks_frac,Carbonate rock fraction,Geology,0.0331290050642208,0.03178881853015236
+snow,clay_frac,Clay fraction,Soil,-0.4522783587602235,-0.3371044039565032
+snow,dom_land_cover_frac,Dom. land-cover fraction,Vegetation,0.1219036419945925,0.11230692273638643
+snow,elev_mean,Mean elevation,Topography,0.4814177951454902,0.4734335464917246
+snow,frac_forest,Forest fraction,Vegetation,0.2483219250651892,0.32804402737374366
+snow,frac_snow,Snow fraction,Climate,0.7463584441612732,0.7901486884992287
+snow,geol_permeability,Geological permeability,Geology,-0.1675811605232588,-0.13280959729177694
+snow,geol_porosity,Geological porosity,Geology,-0.3368898539870819,-0.31585412313983147
+snow,glim_1st_class_frac,GLiM first-class fraction,Geology,-0.2020512476501428,-0.19570652536636804
+snow,glim_2nd_class_frac,GLiM second-class fraction,Geology,0.1412419888009017,0.13210848869226482
+snow,gvf_diff,Green-veg. fraction range,Vegetation,0.2222813580128975,0.20997076611185492
+snow,gvf_max,Max. green-veg. fraction,Vegetation,0.1403978178833771,0.12583866352604656
+snow,high_prec_dur,High-precipitation duration,Precipitation,-0.1146242192155372,-0.10609599025973934
+snow,high_prec_freq,High-precipitation frequency,Precipitation,-0.4507523464227552,-0.45557868665276746
+snow,lai_diff,LAI range,Vegetation,0.1362977496105582,0.12299475542481697
+snow,lai_max,Maximum LAI,Vegetation,0.0700854064187118,0.058927421874848
+snow,low_prec_dur,Low-precipitation duration,Precipitation,-0.3720988424129279,-0.3649151830854239
+snow,low_prec_freq,Low-precipitation frequency,Precipitation,-0.4776095852289946,-0.4810064080253734
+snow,max_water_content,Maximum water content,Soil,-0.0718020590141726,-0.06191865637152394
+snow,p_mean,Mean precipitation,Climate,-0.1412969712796819,-0.027516095837454856
+snow,p_seasonality,Precipitation seasonality,Climate,0.2562749572302793,-0.17597756808798135
+snow,pet_mean,Mean PET,Climate,-0.6852058214064783,-0.4067649327915302
+snow,root_depth_50,Root depth (50%),Vegetation,-0.0412598658750956,-0.03168676560126496
+snow,sand_frac,Sand fraction,Soil,0.2143589795757841,0.14537380235005135
+snow,silt_frac,Silt fraction,Soil,0.1960599089398243,0.18689772927251894
+snow,slope_mean,Mean slope,Topography,0.4071517792227681,0.5073079159493645
+snow,soil_conductivity,Soil conductivity,Soil,0.2144234085914926,0.22320226370291124
+snow,soil_depth_pelletier,Soil depth (Pelletier),Soil,-0.3739939366107463,-0.3709678165896545
+snow,soil_depth_statsgo,Soil depth (STATSGO),Soil,-0.1179295348078392,-0.10499629346889373
+snow,soil_porosity,Soil porosity,Soil,-0.0401677816224254,-0.04930326573785184
+sub,area_gages2,Catchment area,Topography,0.0590872758391208,0.044969076700329076
+sub,aridity,Aridity (PET/P),Climate,-0.2905206847186704,-0.2927331542709393
+sub,carbonate_rocks_frac,Carbonate rock fraction,Geology,0.1391462355650859,0.1486534691651525
+sub,clay_frac,Clay fraction,Soil,0.1205432993427793,0.0720525215829756
+sub,dom_land_cover_frac,Dom. land-cover fraction,Vegetation,0.1389496518867091,0.10988716892667882
+sub,elev_mean,Mean elevation,Topography,-0.4461745875855697,-0.4736675062301518
+sub,frac_forest,Forest fraction,Vegetation,0.0920800667366531,0.13759573554179466
+sub,frac_snow,Snow fraction,Climate,-0.0735766497394467,-0.1615187476346705
+sub,geol_permeability,Geological permeability,Geology,-0.1758716020537744,-0.17028918156221165
+sub,geol_porosity,Geological porosity,Geology,0.0755811407217424,0.07196852890850029
+sub,glim_1st_class_frac,GLiM first-class fraction,Geology,0.1363716770173572,0.12672835241322708
+sub,glim_2nd_class_frac,GLiM second-class fraction,Geology,-0.0918064773593665,-0.08378327515670872
+sub,gvf_diff,Green-veg. fraction range,Vegetation,0.4488931729671072,0.40463182697736916
+sub,gvf_max,Max. green-veg. fraction,Vegetation,0.4258259968031551,0.3839407402364253
+sub,high_prec_dur,High-precipitation duration,Precipitation,-0.4940050702062948,-0.46499549068513896
+sub,high_prec_freq,High-precipitation frequency,Precipitation,-0.1005551790834164,-0.07101953182035935
+sub,lai_diff,LAI range,Vegetation,0.4536276600990753,0.4106662530736736
+sub,lai_max,Maximum LAI,Vegetation,0.4176624495812847,0.3845109955780958
+sub,low_prec_dur,Low-precipitation duration,Precipitation,-0.4669724608753855,-0.4301543478291182
+sub,low_prec_freq,Low-precipitation frequency,Precipitation,-0.2546928101549533,-0.2252722125288893
+sub,max_water_content,Maximum water content,Soil,0.2562652861933323,0.2804668290174322
+sub,p_mean,Mean precipitation,Climate,0.2116503996329042,0.1838971088733537
+sub,p_seasonality,Precipitation seasonality,Climate,0.0707254638101771,0.20780429591346217
+sub,pet_mean,Mean PET,Climate,-0.0243497592664579,-0.21370276722540746
+sub,root_depth_50,Root depth (50%),Vegetation,0.355124627800949,0.36333182112345724
+sub,sand_frac,Sand fraction,Soil,-0.1414798998472486,-0.09589509829842675
+sub,silt_frac,Silt fraction,Soil,0.3700491058529164,0.33988521979979197
+sub,slope_mean,Mean slope,Topography,-0.2916970640205211,-0.34552675067410094
+sub,soil_conductivity,Soil conductivity,Soil,-0.1460455655502606,-0.14504969555854774
+sub,soil_depth_pelletier,Soil depth (Pelletier),Soil,0.3068321122403758,0.31304998439071857
+sub,soil_depth_statsgo,Soil depth (STATSGO),Soil,0.0354640123969524,0.05549663444922099
+sub,soil_porosity,Soil porosity,Soil,0.3213899880841894,0.3028810677061176
