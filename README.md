@@ -142,7 +142,7 @@ The phenology gate changes the fraction of potential evapotranspiration availabl
 $$
 \begin{aligned}
 \mathrm{GSI}
-  &= \operatorname{clip}\!\left(\frac{T-t_{\min}}{t_{\max}-t_{\min}},\ 0,\ 1\right),\\[4pt]
+  &= \mathrm{clip}\!\left(\frac{T-t_{\min}}{t_{\max}-t_{\min}},\ 0,\ 1\right),\\[4pt]
 \mathrm{PET}_{\mathrm{eff}}
   &= \mathrm{PET}\left(1-w_{\mathrm{phen}}+w_{\mathrm{phen}}\,\mathrm{GSI}\right).
 \end{aligned}
@@ -189,7 +189,7 @@ $$
 P_{\mathrm{snow}} &= w_{\mathrm{snow}}\,P_s,\\
 Q_N &= \min\!\left[
   \sigma(T-t_{\mathrm{crit}})\,
-  \operatorname{softplus}(T-t_{\mathrm{crit}})\,\mathrm{ddf},\ S_n
+  \mathrm{softplus}(T-t_{\mathrm{crit}})\,\mathrm{ddf},\ S_n
 \right],\\[3pt]
 S_n &\leftarrow S_n+P_{\mathrm{snow}}-Q_N,\\
 P_{\mathrm{eff}} &= P_{r,\mathrm{net}}+P_s(1-w_{\mathrm{snow}})+Q_N.
@@ -298,7 +298,7 @@ Reported gates are **posterior probabilities, not sampled binary decisions**. Se
 $$
 \boxed{
 \mathcal{L}_{\mathrm{complexity}}
-=\lambda\sum_{p}k_p\,\operatorname{mean}_{b,t}(w_{b,p})
+=\lambda\sum_{p}k_p\,\mathrm{mean}_{b,t}(w_{b,p})
 }
 $$
 
@@ -314,7 +314,7 @@ $$
 $$
 \begin{aligned}
 \Delta J_p &= J_{\mathrm{OFF},p}-J_{\mathrm{ON},p},\\[3pt]
-\tau_p &= \operatorname{median}\!\left(|\Delta J_p|\right),\\[3pt]
+\tau_p &= \mathrm{median}\!\left(|\Delta J_p|\right),\\[3pt]
 q_p &= \sigma\!\left(\frac{\Delta J_p}{\tau_p}\right),\\[3pt]
 c_p &= 2\,|q_p-0.5|.
 \end{aligned}
@@ -452,7 +452,7 @@ Each result block has a dedicated analysis script. The table preserves the paper
 | **3.1 — Skill** | `evaluate/skill.py` | Cross-basin medians for each seed and four alternative aggregations. Paired Flex−Full comparison: mean over seeds per basin, median over basins, 2,000 basin bootstrap draws (seed `20261106`). |
 | **3.2 — Detectability** | `evaluate/detectability.py` | Among true-ON basins, high ($\Delta J>P_p$), weak ($0\le\Delta J\le P_p$), and negative ($\Delta J<0$) strata; recall for $w>0.5$. |
 | **3.3 — Scenario contrast** | `evaluate/detectability.py` | Rule minus random scenario: balanced accuracy and AUC per seed, averaged over seeds; 2,000 basin resamples of 135 holdout basins. |
-| **3.4 — Evidence / regional** | `evaluate/evidence.py`, `regional.py`, `regional_intervals.py` | Three-seed classes `decisive_open`, `decisive_closed`, and `uncertain` require consistent seed signs and $|\operatorname{median}(\Delta J)|>\mathrm{SD}$. LORO versus Full-data class: balanced accuracy; region-stratified bootstrap, 1,000 draws (seed `20260516`). |
+| **3.4 — Evidence / regional** | `evaluate/evidence.py`, `regional.py`, `regional_intervals.py` | Three-seed classes `decisive_open`, `decisive_closed`, and `uncertain` require consistent seed signs and $|\mathrm{median}(\Delta J)|>\mathrm{SD}$. LORO versus Full-data class: balanced accuracy; region-stratified bootstrap, 1,000 draws (seed `20260516`). |
 | **3.4 — Attribute AUC** | `evaluate/attribute_auc.py` | Held-out gate predicts the Full-data decisive class as a continuous score; 1,000 stratified resamples (seed `20260521`); single-class regions produce `NaN`. |
 | **3.5 — Fixed-off** | `evaluate/fixed_off.py` | Replay frozen Full checkpoints, set one gate to 0 and the other three to 1, keep parameters and routing fixed; compute per-basin NSE/KGE losses. |
 | **3.5 — Process removal** | `evaluate/removal.py` | Compare fixed-off and independently refitted LOPO using three-seed basin means, group medians, ON−OFF differences of medians, and paired Fixed−LOPO differences; 2,000 basin resamples (seed `20261106`). |
