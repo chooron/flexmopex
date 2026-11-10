@@ -1,248 +1,493 @@
 # Flex-MOPEX
 
-Reproduction package for the Flex-MOPEX experiments: a differentiable daily
-MOPEX model with learned structural gates, its real-basin and synthetic training
-code, the analysis scripts behind the paper's results, and one script per figure.
+**Reproducible experiments for a differentiable daily MOPEX model with learned structural gates.**
 
-## Layout
+This repository contains real-basin and synthetic training workflows, the evaluation scripts used for the paper's results, and standalone figure-generation scripts. It also documents the required external datasets, archived outputs, verification status, and known reproduction limits.
+
+| Component | Scope |
+| :-- | :-- |
+| Hydrological model | Daily, four-component MOPEX with optional processes controlled by structural gates |
+| Real-basin experiments | 671 CAMELS-US catchments; Basic, Full, Fixed, Flex, and regional hold-out runs |
+| Synthetic experiments | 536 training and 135 holdout basins; five learner variants |
+| Reproducibility | Result-specific analyses, figure scripts, tests, and archived-output comparisons |
+
+**Contents:** [Repository](#repository-structure) · [Environment and data](#environment-and-data) · [Model](#model-formulation) · [Training](#training-methodology) · [Reproduction commands](#reproduction-commands) · [Analysis and figures](#analysis-and-figures) · [Verification](#verification) · [Known limitations](#known-limitations)
+
+## Repository structure
+
+The layout separates model implementation, experiment entry points, evaluation, and plotting. Paths below are relative to the repository root.
 
 ```text
-train/                     training code
-  run_model.py             real-basin entry (Basic / Full / Fixed / Flex, LORO)
-  my_trainer.py            epoch loop, checkpointing, early stopping
-  model_builder.py         physics and network registry
-  local_model_handler.py   dPL wrapper (physics + parameter/gate networks)
-  models/mopex.py          daily water-balance step and the Flex model class
-  models/base_mopex.py     forcings, parameter descaling, state loop, UH routing
-  models/fixed_weight_mopex.py   fixed-gate endpoints
-  models/structure_net.py  attribute-only gate encoder
-  models/cf_trainer.py     counterfactual supervision (BCE) and target refresh
-  models/nse_dyn_aic_batch_loss.py   fit loss + complexity charge
-  models/early_stopping.py, parameter_nets.py, pub_trainer.py, pub_sampler.py
-  synthetic/generate.py    synthetic dataset generation (teacher forward + noise)
-  synthetic/support.py     teacher loading and batched teacher simulation
-  synthetic/truth.py       gate allocation, spatial split, loader dataset writer
-  synthetic/teacher.py     E2 teacher physics (first submission and E-S0); teacher only
-  synthetic/train.py       synthetic learner entry
-  synthetic/strict/        train-only fold, sampler and strict trainer
-
-configs/                   full.yaml, flex.yaml, regional.yaml, test_cpu.yaml
-inputs/                    verified tables, E2 teacher, and documented external data
-evaluate/                  analysis scripts, one per result block
-  scorer.py                frozen per-basin scoring module used by rescore_synthetic.py
-plots/                     figstyle / data_io / geo / map_frame + per-figure scripts
-tests/                     simulator, training-graph and checkpoint tests
+./
+├── train/                             Training and simulation
+│   ├── run_model.py                   Real-basin entry: Basic / Full / Fixed / Flex / LORO
+│   ├── my_trainer.py                  Epoch loop, checkpoints, early stopping
+│   ├── model_builder.py               Physics and network registry
+│   ├── local_model_handler.py         dPL wrapper for physics and learned networks
+│   ├── models/
+│   │   ├── mopex.py                   Daily water balance and Flex model
+│   │   ├── base_mopex.py              Forcings, parameter scaling, state loop, UH routing
+│   │   ├── fixed_weight_mopex.py      Fixed-gate model endpoints
+│   │   ├── structure_net.py           Attribute-only structural gate encoder
+│   │   ├── cf_trainer.py              Counterfactual BCE and target refresh
+│   │   ├── nse_dyn_aic_batch_loss.py  Fit loss and complexity charge
+│   │   ├── early_stopping.py
+│   │   ├── parameter_nets.py
+│   │   ├── pub_trainer.py
+│   │   └── pub_sampler.py
+│   └── synthetic/
+│       ├── generate.py                Teacher simulation and noise generation
+│       ├── support.py                 Teacher loading and batched simulation
+│       ├── truth.py                   Gate allocation, spatial split, dataset writer
+│       ├── teacher.py                 E2 / E-S0 teacher physics (teacher only)
+│       ├── train.py                   Synthetic learner entry
+│       └── strict/                    Train-only folds, sampling, strict training
+├── configs/                           full.yaml, flex.yaml, regional.yaml, test_cpu.yaml
+├── data/                              Small metadata arrays; external CAMELS bundle
+├── inputs/                            Verified tables, E2 teacher, external archives
+├── evaluate/                          Result-specific analysis scripts
+│   └── scorer.py                      Frozen per-basin scorer for rescore_synthetic.py
+├── plots/                             Plotting helpers and figure-specific scripts
+│   ├── main/
+│   └── supplementary/
+├── tests/                             Simulator, training graph, checkpoint selection
+├── pyproject.toml                     Package metadata and dependency declarations
+└── requirements.txt                   Additional dependency specification
 ```
 
-## Environment
+The `plots/` helpers include `figstyle`, `data_io`, `geo`, and `map_frame`. Details of the external input layouts are maintained in [`data/README.md`](data/README.md) and [`inputs/README.md`](inputs/README.md).
 
-`pyproject.toml` declares the package and its dependencies (PyTorch CPU/CUDA
-index included); nothing is installed by this repository.
+## Environment and data
 
-Python 3.10 with PyTorch 2.9, NumPy, pandas, SciPy, scikit-learn, Hydra,
-OmegaConf, PyYAML, tqdm, `dmg` 1.4.1 and `hydrodl2` 1.3.4; plotting adds
-Matplotlib, GeoPandas, Shapely and PyProj (`requirements.txt`). No code imports
-the original research tree.
+### Environment
 
-## Data
+The documented environment uses **Python 3.10** and **PyTorch 2.9**, together with:
 
-The package ships the small verified tables it needs (`inputs/figures`,
-`inputs/evidence`, `inputs/evaluation`, `inputs/supplementary`,
-`inputs/caravan_671_attributes.csv`, the E2 teacher in `inputs/teacher_s0`) and
-the small arrays `gage_id`/`camels_dates`/`basin_groups` under `data/`.
+- **Scientific and training:** NumPy, pandas, SciPy, scikit-learn, Hydra, OmegaConf, PyYAML, tqdm, `dmg` 1.4.1, and `hydrodl2` 1.3.4.
+- **Plotting:** Matplotlib, GeoPandas, Shapely, and PyProj.
 
-Two things are not shipped because they are large:
+Dependency declarations, including the PyTorch CPU/CUDA index, are provided in `pyproject.toml` and `requirements.txt`. The repository itself does not install packages, and no code imports the original research tree.
 
-- `data/camels_dataset` — the prepared CAMELS-US bundle, a pickle of
-  `(forcings (671, 12418, 3), streamflow (671, 12418, 1), attributes (671, 35))`
-  with forcing order `prcp, tmean, pet`, plus `gage_id.npy` and
-  `camels_dates.npy`.
-- the archived runs under `inputs/trained/` and the scenario datasets under
-  `inputs/synthetic/` (checkpoints, scored windows, `dataset.pkl`,
-  `evaluator_archive.npz`).
+### Included and external data
 
-`data/README.md` and `inputs/README.md` give the exact schema, shapes and layout
-each of them must have, and which script reads it. Point the code at another
-location with `FLEXMOPEX_DATA_DIR`, `FLEXMOPEX_TEACHER_DIR` or
-`FLEXMOPEX_SYNTHETIC_CKPTS` instead of editing paths.
+**Included in the package**
 
-## Model
+- Verified tables: `inputs/figures/`, `inputs/evidence/`, `inputs/evaluation/`, `inputs/supplementary/`.
+- Catchment attributes: `inputs/caravan_671_attributes.csv`.
+- E2 teacher: `inputs/teacher_s0/`.
+- Small arrays under `data/`: `gage_id`, `camels_dates`, and `basin_groups`.
 
-One daily step per catchment component; storages in mm, fluxes in mm/day,
-temperature in °C.
+**Not included because of size**
 
-1. **Phenology.** `GSI = clip((T - tmin)/(tmax - tmin), 0, 1)`,
-   `PET_eff = PET·(1 - w_phen + w_phen·GSI)`.
-2. **Partition.** `f_r = sigmoid(T - tcrit)`, `P_r = P·f_r`, `P_s = P - P_r`.
-3. **Interception (liquid only).**
-   `season = ½(1 + κ·cos(2π(doy - φ)/365.25))`,
-   `E_i = w_int·min(P_r·season, P_r, PET_eff)`, `P_r,net = P_r - E_i`,
-   `PET_soil = max(PET_eff - E_i, 0)`.
-4. **Snow.** `P_snow = P_s·w_snow`,
-   `Q_N = min(sigmoid(T-tcrit)·softplus(T-tcrit)·ddf, S_n)`,
-   `S_n ← S_n + P_snow - Q_N`, `P_eff = P_r,net + P_s(1-w_snow) + Q_N`.
-5. **Upper store.** overflow `q1f = max(S1 + P_eff - Sb1, 0)`, then
-   `ET1 = min(PET_soil·min(S1/Sb1, 1), S1)`, then
-   `q_w = S1(1 - e^{-1/tw})`.
-6. **Lower store.** `q2f = w_sub·max(S2 - Sb2, 0)`, `q2u = S2(1 - e^{-1/tu})`,
-   `ET2 = min((PET_soil - ET1)⁺·min(S2/Se, 1), S2)`.
-7. **Routing.** two stores with `r_c = 1 - e^{-1/tc}`; `Q = q_f + q_s`.
-8. **Outlet.** four components are averaged and convolved with a normalized
-   15-ordinate gamma unit hydrograph.
+| External input | Expected contents |
+| :-- | :-- |
+| `data/camels_dataset` | Prepared CAMELS-US pickle plus `gage_id.npy` and `camels_dates.npy` |
+| `inputs/trained/` | Archived runs, checkpoints, and scored windows |
+| `inputs/synthetic/` | Scenario datasets, including `dataset.pkl` and `evaluator_archive.npz` |
 
-Twelve parameters describe each component (`Sb1, tw, tu, Se, tc, ddf, tcrit,
-Sb2, κ, φ, tmin, tmax`, the last two shared conceptually through the phenology
-term) plus two routing controls, giving 50,754 trainable values at four
-components. Bounds: `Sb1 0.01-50`, `tw 0.01-5`, `tu 1-2000`, `Se 1-1000`,
-`tc 0.1-30`, `ddf 0-20`, `tcrit -3-3`, `Sb2 1-1500`, `κ 0-1`, `φ 0-365`,
-`tmin -10-5`, `tmax 5-30`, `rout_a 0-2.9`, `rout_b 0-6.5`.
+The prepared CAMELS-US bundle contains:
 
-Structural gates: a 35 → 128 → 128 → 8 network maps standardized catchment
-attributes to one OFF/ON logit pair per process. Training samples gates with a
-Gumbel-softmax switch; evaluation uses the deterministic softmax probability, so
-reported gates are posterior probabilities, not sampled decisions. A gate of 0
-removes the optional part of its process only: with `w_snow = 0` melt of an
-existing snowpack still occurs, and with `w_sub = 0` slow drainage and lower-store
-evaporation remain.
-
-## Training
-
-**Real basins.** 671 CAMELS-US catchments; training window 1980-10-01 to
-1995-09-30, test window 1995-10-01 to 2010-09-30, 365-day warm-up, batch size
-100, Adadelta at learning rate 1.0, at most 100 epochs with a minimum of 50, and
-early stopping on the training loss (patience 20, `min_delta` 1e-4). The selected
-checkpoint is the epoch-mean minimum, written together with `best`, `last` and
-`final` roles plus an `early_stopping.json` record. Three seeds (42/43/44) are
-used for every arm.
-
-**Objectives.** The fit term is the per-catchment variance-normalized squared
-error of discharge. The complexity charge is
-`λ · Σ_p k_p · mean_{b,t} w_{b,p}` with `λ = 0.007` and
-`k = (2, 2, 2, 1)` for phenology, interception, snow and subsurface. Flex adds
-counterfactual supervision: at the start of every epoch each process is evaluated
-ON and OFF, `ΔJ = J_OFF - J_ON` (with the complexity term subtracted),
-`τ_p = median|ΔJ|`, `q = sigmoid(ΔJ/τ_p)`, `c = 2|q - 0.5|`, and a
-confidence-weighted BCE trains the gate logits. The two gradient paths are
-isolated: fit and complexity terms cannot reach the gate network, and the BCE
-term cannot reach the parameter backbone.
-
-**Endpoints.** Full fixes all gates at 1; Basic at 0; Fixed at user-supplied
-values. Flex learns them. Regional runs hold out one of seven regions and refit.
-The release refuses to train into a non-empty directory or inside `inputs/`.
-
-**Synthetic learners.** Scenario datasets contain 536 training and 135 holdout
-basins with teacher-generated noisy discharge. `train/synthetic/train.py` accepts
-the five method variants used in the paper (`Canonical_BCE`, `Plain_BCE`,
-`Direct_Fit`, `Matched_Direct_Fit`, `Strict_Direct_Fit`) with the same budget as
-the real-basin runs; folds are built from training basins only.
-
-## Analysis
-
-| Result | Script | Method |
-|---|---|---|
-| 3.1 | `evaluate/skill.py` | Per-seed cross-basin medians and four alternative aggregations; paired Flex−Full difference per seed, basin mean over seeds, median with 2,000 basin resamples (seed 20261106). |
-| 3.2 | `evaluate/detectability.py` | True-ON basins split into high (`ΔJ > P_p`), weak (`0 ≤ ΔJ ≤ P_p`) and negative (`ΔJ < 0`) strata; recall of `w > 0.5` per stratum. |
-| 3.3 | `evaluate/detectability.py` | Scenario contrast (rule minus random scenarios) for balanced accuracy and AUC, per seed, averaged over seeds, with 2,000 basin resamples over the 135 holdout basins. |
-| 3.4 | `evaluate/evidence.py`, `regional.py`, `regional_intervals.py` | Three-seed evidence classes (`decisive_open` / `decisive_closed` / `uncertain`) from the sign of all seeds and `|median ΔJ| > SD`; LORO classes scored against the Full-data class as reference with balanced accuracy; region-stratified basin bootstrap (1,000 draws, seed 20260516). |
-| 3.4 | `evaluate/attribute_auc.py` | Held-out gate as a continuous predictor of the Full-data decisive class, AUC with 1,000 stratified resamples (seed 20260521); single-class regions stay NaN. |
-| 3.5 | `evaluate/fixed_off.py` | Full checkpoints replayed with one gate set to 0 and the other three at 1, parameters and routing frozen; per-basin NSE/KGE losses. |
-| 3.5 | `evaluate/removal.py` | Fixed-off versus independently refitted LOPO: three-seed basin means, group medians, ON−OFF difference of medians, and the paired Fixed−LOPO difference, each with 2,000 basin resamples (seed 20261106). |
-
-None of these scripts forward the model except `fixed_off.py`; the rest read
-frozen artefacts. Every script writes to a new path and refuses to overwrite.
-
-## Figures
-
-`plots/main/fig3_study_area.py` … `fig10_removal.py` cover the current candidate
-numbering (study area = Figure 3, process removal = Figure 10); the study-area
-number is not yet confirmed against the manuscript;
-`plots/supplementary/fig_attributes.py` and `fig_refit.py` to the two
-supplementary candidates. Each script is standalone:
-
-```sh
-python plots/main/fig4_prediction.py --data inputs/figures --out /path/to/figures
+```text
+forcings    (671, 12418, 3)   order: prcp, tmean, pet
+streamflow  (671, 12418, 1)
+attributes  (671,    35)
 ```
 
-`run_all.sh` in each folder draws everything. Figures 5 and 10 remain unapproved
-previews and are skipped unless `PREVIEWS=1`; Figure 7 reproduces the verified
-classes but not the candidate image pixel for pixel.
+Consult `data/README.md` and `inputs/README.md` for exact schemas, shapes, archive layouts, and the scripts that consume each item. External paths can be configured without editing source code:
 
-## Usage
+| Environment variable | External resource |
+| :-- | :-- |
+| `FLEXMOPEX_DATA_DIR` | CAMELS dataset location |
+| `FLEXMOPEX_TEACHER_DIR` | Teacher model location |
+| `FLEXMOPEX_SYNTHETIC_CKPTS` | Synthetic learner checkpoints |
 
-```sh
-# real basins
-python train/run_model.py --config configs/flex.yaml --mode train_test \
-    --model-type flex --seed 42 --output-root /path/to/results --run-name flex_seed42
+## Model formulation
 
-# synthetic dataset (teacher forward; scenarios A-D, add --scenario-tag _low/_high for the noise variants)
-python train/synthetic/generate.py --out /path/to/synthetic-data --scenarios A,B,C,D
+### Daily process overview
 
-# E2 variant: first-submission S0 teacher from inputs/teacher_s0
-FLEXMOPEX_TEACHER_DIR=inputs/teacher_s0 python train/synthetic/generate.py \
-    --out /path/to/synthetic-data --scenarios A --scenario-tag _E2 \
-    --teacher-aprime --run-label E2_teacher_aprime
+The simulator advances each of four catchment components daily. **Storage** is measured in mm, **fluxes** in mm/day, and **temperature** in °C.
 
-# synthetic learner
-python train/synthetic/train.py --run_id E1_A_42 --scenario A \
-    --method Canonical_BCE --seed 42 --output_dir /path/to/synthetic-run
+```text
+Temperature + precipitation + PET
+                  │
+                  ├── Phenology ─────────────── effective PET
+                  │
+                  └── Rain / snow partition
+                           │
+                  ┌────────┴────────┐
+                  │                 │
+             Interception      Snow storage / melt
+                  │                 │
+                  └────────┬────────┘
+                           │
+                   Effective input
+                           │
+                     Upper store
+                           │
+                     Lower store
+                           │
+                    Two-store routing
+                           │
+           Four-component mean + gamma UH
+                           │
+                    Outlet discharge
+```
 
-# scenario-correct NSE/KGE re-scoring of saved learner checkpoints (CPU)
+The schematic is an overview, not a replacement for the equations or the implementation's state-update order.
+
+### 1. Phenology and effective evapotranspiration
+
+The phenology gate changes the fraction of potential evapotranspiration available to the model:
+
+$$
+\begin{aligned}
+\mathrm{GSI}
+  &= \operatorname{clip}\!\left(\frac{T-t_{\min}}{t_{\max}-t_{\min}},\ 0,\ 1\right),\\[4pt]
+\mathrm{PET}_{\mathrm{eff}}
+  &= \mathrm{PET}\left(1-w_{\mathrm{phen}}+w_{\mathrm{phen}}\,\mathrm{GSI}\right).
+\end{aligned}
+$$
+
+Here, $w_{\mathrm{phen}}$ controls the optional phenology adjustment.
+
+### 2. Rain–snow partition
+
+Precipitation is separated using a temperature-dependent rainfall fraction:
+
+$$
+\begin{aligned}
+f_r &= \sigma(T-t_{\mathrm{crit}}),\\
+P_r &= P\,f_r,\\
+P_s &= P-P_r.
+\end{aligned}
+$$
+
+$P_r$ and $P_s$ denote liquid and solid precipitation, respectively; $\sigma$ is the sigmoid function.
+
+### 3. Interception
+
+Interception acts on **liquid precipitation only**. The seasonal factor and interception flux are:
+
+$$
+\begin{aligned}
+s_{\mathrm{season}}
+  &= \frac{1}{2}\left[1+\kappa\cos\!\left(\frac{2\pi(\mathrm{doy}-\phi)}{365.25}\right)\right],\\[4pt]
+E_i
+  &= w_{\mathrm{int}}\min\!\left(P_r s_{\mathrm{season}},\ P_r,\ \mathrm{PET}_{\mathrm{eff}}\right),\\
+P_{r,\mathrm{net}} &= P_r-E_i,\\
+\mathrm{PET}_{\mathrm{soil}}
+  &= \max\!\left(\mathrm{PET}_{\mathrm{eff}}-E_i,\ 0\right).
+\end{aligned}
+$$
+
+The interception gate $w_{\mathrm{int}}$ scales the optional liquid-water loss.
+
+### 4. Snow accumulation and melt
+
+$$
+\begin{aligned}
+P_{\mathrm{snow}} &= w_{\mathrm{snow}}\,P_s,\\
+Q_N &= \min\!\left[
+  \sigma(T-t_{\mathrm{crit}})\,
+  \operatorname{softplus}(T-t_{\mathrm{crit}})\,\mathrm{ddf},\ S_n
+\right],\\[3pt]
+S_n &\leftarrow S_n+P_{\mathrm{snow}}-Q_N,\\
+P_{\mathrm{eff}} &= P_{r,\mathrm{net}}+P_s(1-w_{\mathrm{snow}})+Q_N.
+\end{aligned}
+$$
+
+Setting $w_{\mathrm{snow}}=0$ stops **new snow accumulation through this gate**, but an existing snowpack can still melt.
+
+### 5. Upper soil store
+
+The implementation computes overflow, evapotranspiration, and a release term in that order:
+
+$$
+\begin{aligned}
+q_{1f} &= \max(S_1+P_{\mathrm{eff}}-S_{b1},\ 0),\\
+\mathrm{ET}_1 &= \min\!\left(\mathrm{PET}_{\mathrm{soil}}\min\!\left(\frac{S_1}{S_{b1}},1\right),\ S_1\right),\\
+q_w &= S_1\left(1-e^{-1/t_w}\right).
+\end{aligned}
+$$
+
+### 6. Lower soil store
+
+$$
+\begin{aligned}
+q_{2f} &= w_{\mathrm{sub}}\max(S_2-S_{b2},\ 0),\\
+q_{2u} &= S_2\left(1-e^{-1/t_u}\right),\\
+\mathrm{ET}_2 &= \min\!\left[
+  (\mathrm{PET}_{\mathrm{soil}}-\mathrm{ET}_1)^{+}
+  \min\!\left(\frac{S_2}{S_e},1\right),\ S_2
+\right].
+\end{aligned}
+$$
+
+The subsurface gate $w_{\mathrm{sub}}$ controls the optional $q_{2f}$ term. At $w_{\mathrm{sub}}=0$, slow drainage $q_{2u}$ and lower-store evaporation $\mathrm{ET}_2$ remain active.
+
+### 7. Routing and outlet
+
+The routing system uses two stores, with a release coefficient and total discharge defined as:
+
+$$
+\begin{aligned}
+r_c &= 1-e^{-1/t_c},\\
+Q &= q_f+q_s.
+\end{aligned}
+$$
+
+The four component outputs are averaged and convolved with a **normalized, 15-ordinate gamma unit hydrograph** at the outlet.
+
+### Parameters and bounds
+
+Each component is described by 12 parameters: $S_{b1}$, $t_w$, $t_u$, $S_e$, $t_c$, $\mathrm{ddf}$, $t_{\mathrm{crit}}$, $S_{b2}$, $\kappa$, $\phi$, $t_{\min}$, and $t_{\max}$. The last two are conceptually shared through the phenology term. Two further controls specify routing. The documented four-component model has **50,754 trainable values**.
+
+| Parameter | Bound | Parameter | Bound |
+| :-- | :-- | :-- | :-- |
+| $S_{b1}$ | 0.01–50 | $S_{b2}$ | 1–1500 |
+| $t_w$ | 0.01–5 | $t_u$ | 1–2000 |
+| $S_e$ | 1–1000 | $t_c$ | 0.1–30 |
+| $\mathrm{ddf}$ | 0–20 | $t_{\mathrm{crit}}$ | −3–3 |
+| $\kappa$ | 0–1 | $\phi$ | 0–365 |
+| $t_{\min}$ | −10–5 | $t_{\max}$ | 5–30 |
+| `rout_a` | 0–2.9 | `rout_b` | 0–6.5 |
+
+### Structural gates
+
+The gate network uses **35 standardized catchment attributes** to produce one OFF/ON logit pair for each of four optional processes:
+
+$$
+\underbrace{35}_{\text{attributes}}
+\;\longrightarrow\;128\;\longrightarrow\;128
+\;\longrightarrow\;
+\underbrace{8}_{4\times(\text{OFF, ON})\text{ logits}}.
+$$
+
+| Phase | Gate interpretation |
+| :-- | :-- |
+| Training | Gumbel-softmax samples a structural switch. |
+| Evaluation | Deterministic softmax gives the reported ON probability. |
+
+Reported gates are **posterior probabilities, not sampled binary decisions**. Setting a gate to zero removes only the corresponding optional process contribution, as illustrated by the snow and subsurface equations above.
+
+## Training methodology
+
+### Real-basin configuration
+
+| Setting | Value |
+| :-- | :-- |
+| Catchments | 671 CAMELS-US basins |
+| Training | 1980-10-01 to 1995-09-30 |
+| Testing | 1995-10-01 to 2010-09-30 |
+| Warm-up | 365 days |
+| Optimizer | Adadelta, learning rate 1.0 |
+| Batch size | 100 basins |
+| Epoch budget | Minimum 50, maximum 100 |
+| Early stopping | Training loss; patience 20; `min_delta=1e-4` |
+| Random seeds | 42, 43, 44 for each arm |
+| Checkpoint selection | Minimum epoch-mean loss; `best`, `last`, and `final` roles plus `early_stopping.json` |
+
+**Multiplier note:** Some configuration files declare `nmul: 16`. Formal runs explicitly pass `--nmul 4` (50,754 trainable values), which is also the default in this release.
+
+### Optimization objectives
+
+**Fit objective.** Discharge prediction is trained using per-catchment variance-normalized squared error.
+
+**Complexity charge.** Optional processes are penalized according to their gate weights:
+
+$$
+\boxed{
+\mathcal{L}_{\mathrm{complexity}}
+=\lambda\sum_{p}k_p\,\operatorname{mean}_{b,t}(w_{b,p})
+}
+$$
+
+$$
+\lambda=0.007,
+\qquad
+(k_{\mathrm{phen}},k_{\mathrm{int}},k_{\mathrm{snow}},k_{\mathrm{sub}})
+=(2,2,2,1).
+$$
+
+**Counterfactual gate supervision (Flex).** At the beginning of every epoch, each optional process is evaluated in its ON and OFF states. The complexity contribution is subtracted from the counterfactual comparison before training targets are constructed:
+
+$$
+\begin{aligned}
+\Delta J_p &= J_{\mathrm{OFF},p}-J_{\mathrm{ON},p},\\[3pt]
+\tau_p &= \operatorname{median}\!\left(|\Delta J_p|\right),\\[3pt]
+q_p &= \sigma\!\left(\frac{\Delta J_p}{\tau_p}\right),\\[3pt]
+c_p &= 2\,|q_p-0.5|.
+\end{aligned}
+$$
+
+Here, $q_p$ is the soft ON target and $c_p$ is its confidence weight. A **confidence-weighted binary cross-entropy (BCE)** trains the gate logits.
+
+The two gradient paths are isolated:
+
+| Objective | Parameter backbone | Gate network |
+| :-- | :--: | :--: |
+| Fit + complexity | Receives gradients | **Blocked** |
+| Counterfactual BCE | **Blocked** | Receives gradients |
+
+### Experiment variants
+
+| Variant | Structural gates |
+| :-- | :-- |
+| `Basic` | All fixed to 0 |
+| `Full` | All fixed to 1 |
+| `Fixed` | User-supplied fixed values |
+| `Flex` | Learned from catchment attributes |
+| Regional / LORO | One of seven regions is held out; models are refitted |
+
+Training refuses a non-empty output directory and refuses to write training runs inside `inputs/`.
+
+### Synthetic experiments
+
+Synthetic scenario datasets consist of **536 training** and **135 holdout** basins, with noisy teacher-generated discharge. `train/synthetic/train.py` supports five learner methods:
+
+`Canonical_BCE` · `Plain_BCE` · `Direct_Fit` · `Matched_Direct_Fit` · `Strict_Direct_Fit`
+
+They use the same training budget as the real-basin experiments. Folds are constructed exclusively from training basins.
+
+## Reproduction commands
+
+Run these commands from the repository root after configuring the required dependencies and external data. Replace placeholder output paths with new destinations.
+
+### Real-basin training and evaluation
+
+```bash
+python train/run_model.py \
+    --config configs/flex.yaml \
+    --mode train_test \
+    --model-type flex \
+    --seed 42 \
+    --output-root /path/to/results \
+    --run-name flex_seed42
+```
+
+### Synthetic data generation
+
+Generate the A–D scenarios. For noise variants, add `--scenario-tag _low` or `--scenario-tag _high`.
+
+```bash
+python train/synthetic/generate.py \
+    --out /path/to/synthetic-data \
+    --scenarios A,B,C,D
+```
+
+Generate the E2 variant with the first-submission S0 teacher:
+
+```bash
+FLEXMOPEX_TEACHER_DIR=inputs/teacher_s0 \
+python train/synthetic/generate.py \
+    --out /path/to/synthetic-data \
+    --scenarios A \
+    --scenario-tag _E2 \
+    --teacher-aprime \
+    --run-label E2_teacher_aprime
+```
+
+### Synthetic learner and rescoring
+
+```bash
+python train/synthetic/train.py \
+    --run_id E1_A_42 \
+    --scenario A \
+    --method Canonical_BCE \
+    --seed 42 \
+    --output_dir /path/to/synthetic-run
+```
+
+Recompute scenario-correct NSE/KGE from saved learner checkpoints on CPU:
+
+```bash
 FLEXMOPEX_SYNTHETIC_CKPTS=/path/to/synthetic/checkpoints \
-    python evaluate/rescore_synthetic.py --out /path/to/rescore --scenario A
+python evaluate/rescore_synthetic.py \
+    --out /path/to/rescore \
+    --scenario A
+```
 
-# analysis
+### Analysis scripts
+
+```bash
 python evaluate/skill.py --out /path/to/3_1.csv
 python evaluate/detectability.py --out /path/to/tables
 python evaluate/attribute_auc.py --out /path/to/attributes
 python evaluate/removal.py --output /path/to/removal
 python evaluate/regional.py --output /path/to/regional
 python evaluate/regional_intervals.py --output /path/to/intervals.csv
-python evaluate/fixed_off.py --seed 42 --device cuda:0 \
-    --output /path/to/fixed_off.csv --diag-output /path/to/replay.csv
 
-# figures
+python evaluate/fixed_off.py \
+    --seed 42 \
+    --device cuda:0 \
+    --output /path/to/fixed_off.csv \
+    --diag-output /path/to/replay.csv
+```
+
+### Figures
+
+```bash
+# One figure
+python plots/main/fig4_prediction.py \
+    --data inputs/figures \
+    --out /path/to/figures
+
+# Main figure batch
 OUT=/path/to/figures plots/main/run_all.sh
+
+# Supplementary figure batch
 OUT=/path/to/supplementary plots/supplementary/run_all.sh
 ```
 
-Configurations declare `nmul: 16`; every formal run passes `--nmul 4`
-(50,754 parameters), which is also the default here.
+Figures 5 and 10 are unapproved previews. They are skipped in the batch commands unless `PREVIEWS=1` is set.
+
+## Analysis and figures
+
+### Analysis-to-result map
+
+Each result block has a dedicated analysis script. The table preserves the paper's section numbering and the reported aggregation / uncertainty procedures.
+
+| Paper result | Script | Calculation and reference |
+| :-- | :-- | :-- |
+| **3.1 — Skill** | `evaluate/skill.py` | Cross-basin medians for each seed and four alternative aggregations. Paired Flex−Full comparison: mean over seeds per basin, median over basins, 2,000 basin bootstrap draws (seed `20261106`). |
+| **3.2 — Detectability** | `evaluate/detectability.py` | Among true-ON basins, high ($\Delta J>P_p$), weak ($0\le\Delta J\le P_p$), and negative ($\Delta J<0$) strata; recall for $w>0.5$. |
+| **3.3 — Scenario contrast** | `evaluate/detectability.py` | Rule minus random scenario: balanced accuracy and AUC per seed, averaged over seeds; 2,000 basin resamples of 135 holdout basins. |
+| **3.4 — Evidence / regional** | `evaluate/evidence.py`, `regional.py`, `regional_intervals.py` | Three-seed classes `decisive_open`, `decisive_closed`, and `uncertain` require consistent seed signs and $|\operatorname{median}(\Delta J)|>\mathrm{SD}$. LORO versus Full-data class: balanced accuracy; region-stratified bootstrap, 1,000 draws (seed `20260516`). |
+| **3.4 — Attribute AUC** | `evaluate/attribute_auc.py` | Held-out gate predicts the Full-data decisive class as a continuous score; 1,000 stratified resamples (seed `20260521`); single-class regions produce `NaN`. |
+| **3.5 — Fixed-off** | `evaluate/fixed_off.py` | Replay frozen Full checkpoints, set one gate to 0 and the other three to 1, keep parameters and routing fixed; compute per-basin NSE/KGE losses. |
+| **3.5 — Process removal** | `evaluate/removal.py` | Compare fixed-off and independently refitted LOPO using three-seed basin means, group medians, ON−OFF differences of medians, and paired Fixed−LOPO differences; 2,000 basin resamples (seed `20261106`). |
+
+**Evaluation boundary:** Among the listed analyses, only `evaluate/fixed_off.py` forwards the model; the other scripts read frozen artifacts. All scripts write to new destinations and refuse overwrites.
+
+### Figure scripts and status
+
+- **Main figures:** `plots/main/fig3_study_area.py` through `fig10_removal.py` follow the current candidate numbering. The study-area figure's final number has not been confirmed against the manuscript.
+- **Supplementary candidates:** `plots/supplementary/fig_attributes.py` and `plots/supplementary/fig_refit.py`.
+- **Outstanding figure checks:** Figures 5 and 10 are awaiting approval; Figure 7 reproduces verified classes but not the candidate raster pixel for pixel.
 
 ## Verification
 
-Verified on this machine, one job at a time:
+The following checks were reported for the packaged implementation **on the original verification machine**, with one job run at a time. They do not imply that a full training campaign was rerun when preparing this README.
 
-- Training entries: Full, Flex, Basic, Fixed, regional hold-out and all five
-  synthetic methods reach forward, loss and backward on real data; a 4-basin
-  1-epoch Flex run completes with checkpoints and early-stopping metadata, and
-  the production batch size of 100 basins passes preflight on GPU.
-- Simulator tests 11/11, training-graph checks 7/7, checkpoint-selection checks
-  12/12.
-- Results 3.1, 3.2, 3.3 and the 3.4 attribute AUC regenerate the archived tables
-  with identical values; the 3.4 evidence and regional tables and the 3.5
-  fixed-off/LOPO tables regenerate byte for byte, including 2,684 rows per seed
-  for three seeds.
-- Attribute associations regenerate exactly: `rho_w` and `rho_q` differ from the
-  verified table by at most 1e-16.
-- The dataset generator rebuilds Scenario A deterministically (two independent runs
-  are byte-identical). Against the archived dataset the truth gates, basin axis,
-  dates, forcings, attributes and noise multipliers match exactly, while teacher
-  discharge differs by at most 9.1e-4 mm/day from the archived file.
-- Figures 4, 6, 8, 9 and both supplementary candidates regenerate byte for byte.
+| Check | Reported outcome |
+| :-- | :-- |
+| Entry-point smoke tests | Full, Flex, Basic, Fixed, regional hold-out, and all five synthetic methods passed forward/loss/backward on real data. |
+| Short Flex run | Four basins, one epoch; checkpoints and early-stopping metadata produced. |
+| GPU preflight | Production batch size of 100 basins passed. |
+| Simulator tests | **11 / 11** passed. |
+| Training-graph tests | **7 / 7** passed. |
+| Checkpoint-selection tests | **12 / 12** passed. |
+| Numerical tables | Results 3.1–3.3 and 3.4 attribute AUC matched archived values; 3.4 evidence/regional and 3.5 fixed-off/LOPO tables matched byte for byte. |
+| Fixed-off/LOPO volume | **2,684 rows per seed** across three seeds. |
+| Attribute associations | `rho_w` and `rho_q` differed from verified tables by at most $10^{-16}$. |
+| Synthetic Scenario A | Two generated runs were byte-identical; truth gates, basin axis, dates, forcings, attributes, and noise multipliers matched the archived dataset exactly. |
+| Teacher discharge | Maximum difference from the archived Scenario A file: $9.1\times10^{-4}$ mm/day. |
+| Figure regeneration | Figures 4, 6, 8, 9 and both supplementary candidates matched byte for byte. |
 
 ## Known limitations
 
-- The dataset generator reproduces A-D, low/high noise and E2, and the
-  scenario-specific rescoring reproduces the archived per-run NSE. Regenerated
-  truth gates, basin axis, dates, forcings, attributes and noise match the
-  archived datasets exactly; teacher discharge differs by <=1e-3 mm/day from the
-  archived files, so regenerated datasets are equivalent but not byte-identical.
-- `rho_w` uses the prepared Caravan attribute table and `rho_q` the raw CAMELS
-  table, so the two correlations have different masks and sample sizes.
-- Figure 7 uses the verified class table but its raster differs from the
-  candidate image; the cause is unresolved. Figures 5 and 10 await approval.
-- Full 100-epoch training runs were not executed here.
-- Replaying a frozen Full checkpoint reproduces the archived per-basin metrics
-  exactly, but its daily hydrograph differs from the stored prediction arrays by
-  up to ~0.0027 mm/day; the cause is unresolved and is reported with the Figure 10
-  and fixed-off results.
+1. **Re-generated datasets are not byte-identical to the archives.** The generator covers Scenarios A–D, low/high noise, and E2; scenario-specific rescoring reproduces archived per-run NSE. Truth gates, basin order, dates, forcings, attributes, and noise multipliers agree exactly. Teacher discharge can differ by up to $10^{-3}$ mm/day from archived datasets.
+2. **The attribute correlations use different sample masks.** `rho_w` uses the prepared Caravan attributes, whereas `rho_q` uses raw CAMELS attributes; their masks and sample sizes differ.
+3. **Some figure versions remain unresolved.** Figure 7 matches the verified classes but not the candidate raster; the cause is unknown. Figures 5 and 10 await approval, and the study-area figure number is provisional.
+4. **Full-length training was not rerun during package verification.** No full 100-epoch campaign was executed on the verification machine.
+5. **Frozen-checkpoint hydrographs show a small unexplained difference.** Replayed Full checkpoints reproduce archived per-basin metrics exactly, but daily hydrographs differ from stored predictions by up to approximately $0.0027$ mm/day. This is recorded alongside Figure 10 and the fixed-off results.
