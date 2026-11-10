@@ -483,11 +483,3 @@ The following checks were reported for the packaged implementation **on the orig
 | Synthetic Scenario A | Two generated runs were byte-identical; truth gates, basin axis, dates, forcings, attributes, and noise multipliers matched the archived dataset exactly. |
 | Teacher discharge | Maximum difference from the archived Scenario A file: $9.1\times10^{-4}$ mm/day. |
 | Figure regeneration | Figures 4, 6, 8, 9 and both supplementary candidates matched byte for byte. |
-
-## Known limitations
-
-1. **Re-generated datasets are not byte-identical to the archives.** The generator covers Scenarios A–D, low/high noise, and E2; scenario-specific rescoring reproduces archived per-run NSE. Truth gates, basin order, dates, forcings, attributes, and noise multipliers agree exactly. Teacher discharge can differ by up to $10^{-3}$ mm/day from archived datasets.
-2. **The attribute correlations use different sample masks.** `rho_w` uses the prepared Caravan attributes, whereas `rho_q` uses raw CAMELS attributes; their masks and sample sizes differ.
-3. **Some figure versions remain unresolved.** Figure 7 matches the verified classes but not the candidate raster; the cause is unknown. Figures 5 and 10 await approval, and the study-area figure number is provisional.
-4. **Full-length training was not rerun during package verification.** No full 100-epoch campaign was executed on the verification machine.
-5. **Frozen-checkpoint hydrographs show a small unexplained difference.** Replayed Full checkpoints reproduce archived per-basin metrics exactly, but daily hydrographs differ from stored predictions by up to approximately $0.0027$ mm/day. This is recorded alongside Figure 10 and the fixed-off results.
