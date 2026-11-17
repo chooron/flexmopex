@@ -17,6 +17,7 @@ import torch
 import torch.nn.functional as F
 
 ROOT = Path(__file__).resolve().parents[2]
+import paths  # noqa: E402
 sys.path.insert(0, str(ROOT))
 
 from train.synthetic.strict.s2_loader import load_candidate_strict_fold
@@ -29,10 +30,10 @@ from train.synthetic.strict.trainer import (
 from dmg.core.data.data import create_training_grid
 
 FLEX = ROOT / "train"
-S2_DIR = ROOT / "inputs" / "synthetic"
+S2_DIR = paths.EXPERIMENTS / "synthetic" / "dataset"
 CONFIG = Path(os.environ.get(
     "FLEXMOPEX_LEARNER_CONFIG",
-    str(ROOT / "inputs" / "trained" / "normal" / "flex" / "ref" / "seed_42" / "config_snapshot.json")))
+    str(paths.normal("flex", 42) / "config_snapshot.json")))
 SPLIT = FLEX / "synthetic" / "split.json"
 _DATA = Path(os.environ.get("FLEXMOPEX_DATA_DIR", str(ROOT / "data")))
 IDS = Path(os.environ.get("FLEXMOPEX_GAGE_ID", str(_DATA / "gage_id.npy")))
@@ -69,7 +70,7 @@ def main() -> None:
 
     t_start = time.perf_counter()
     out_dir = Path(args.output_dir).resolve()
-    protected = [(ROOT / p).resolve() for p in ("data", "inputs", "inputs/evidence", "inputs/trained", "inputs/synthetic")]
+    protected = [(ROOT / p).resolve() for p in ("data",)]
     if any(out_dir == base or base in out_dir.parents for base in protected):
         raise ValueError(f"training output overlaps input data: {out_dir}")
     if out_dir.exists() and any(out_dir.iterdir()):

@@ -809,7 +809,7 @@ def main(argv: list[str] | None = None) -> None:
         if not args.run_name:
             raise ValueError("training requires --run-name for a new output directory")
         output = (Path(args.output_root) / args.run_name).resolve()
-        protected = [(REPO_ROOT / p).resolve() for p in ("data", "inputs", "inputs/evidence", "inputs/trained", "inputs/synthetic")]
+        protected = [(REPO_ROOT / p).resolve() for p in ("data",)]
         if any(output == base or base in output.parents for base in protected):
             raise ValueError(f"training output overlaps input data: {output}")
         os.environ["FLEXMOPEX_OUTPUT_DIR"] = str(output)

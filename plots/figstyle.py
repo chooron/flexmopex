@@ -82,11 +82,11 @@ def apply():
     })
 
 
-def panel_title(ax, letter, text, x=0.0, y=1.02, ha="left", **kw):
+def panel_title(ax, letter, text, x=0.0, y=1.02, ha="left", fontsize=FS_TITLE, **kw):
     """Bold '(a) Title' placed above the axes, left-aligned with the axes."""
     ax.text(x, y, f"({letter}) {text}" if text else f"({letter})",
             transform=ax.transAxes, ha=ha, va="bottom",
-            fontsize=FS_TITLE, fontweight="bold", color="#1A1A1A", **kw)
+            fontsize=fontsize, fontweight="bold", color="#1A1A1A", **kw)
 
 
 def hgrid(ax):

@@ -85,6 +85,17 @@ def project_points(lon, lat):
     return np.asarray(x), np.asarray(y)
 
 
+def check_points_in_regions(df, regions, allowed_exceptions=("04296000",)):
+    """Point-in-polygon audit. Returns a DataFrame of catchments whose point
+    falls outside its recorded region (excluding documented exceptions)."""
+    pts = gpd.GeoDataFrame(df.copy(), geometry=gpd.points_from_xy(df["x"], df["y"]), crs=CRS)
+    joined = gpd.sjoin(pts, regions.rename(columns={"region": "region_geom"}),
+                       how="left", predicate="within")
+    bad = joined[(joined["region_geom"] != joined["region"])
+                 & (~joined["gauge_id"].astype(str).isin(allowed_exceptions))]
+    return bad[["gauge_id", "region", "region_geom"]]
+
+
 def map_extent(outline, padx=0.01, pady=0.02):
     xmin, ymin, xmax, ymax = outline.bounds
     dx, dy = (xmax - xmin) * padx, (ymax - ymin) * pady

@@ -43,9 +43,11 @@ The layout separates model implementation, experiment entry points, evaluation, 
 │       ├── train.py                   Synthetic learner entry
 │       └── strict/                    Train-only folds, sampling, strict training
 ├── configs/                           full.yaml, flex.yaml, regional.yaml, test_cpu.yaml
-├── data/                              Small metadata arrays; external CAMELS bundle
-├── inputs/                            Verified tables, E2 teacher, external archives
-├── evaluate/                          Result-specific analysis scripts
+├── data/                              Small metadata arrays (gage ids, basin groups, dates)
+├── paths.py                           Resolves the external data archive (FLEXMOPEX_DATA_ROOT)
+├── docs/                              DATA.md, TRAINING.md, FIGURES.md
+├── tools/                             build_data_manifest.py (RUN_INDEX + MANIFEST)
+├── evaluate/                          Result-specific analysis modules
 │   └── scorer.py                      Frozen per-basin scorer for rescore_synthetic.py
 ├── plots/                             Plotting helpers and figure-specific scripts
 │   ├── main/
@@ -55,7 +57,12 @@ The layout separates model implementation, experiment entry points, evaluation, 
 └── requirements.txt                   Additional dependency specification
 ```
 
-The `plots/` helpers include `figstyle`, `data_io`, `geo`, and `map_frame`. Details of the external input layouts are maintained in [`data/README.md`](data/README.md) and [`inputs/README.md`](inputs/README.md).
+The `plots/` package carries the shared styles (`figstyle.py`, `wrrstyle.py`), `geo.py`, and one
+module per figure. `paths.py` is the single place that resolves the external data archive:
+`FLEXMOPEX_DATA_ROOT`, default `F:\ExpData\flexmopex-revision1` (WSL `/mnt/f/...`); no other file
+hard-codes a data path. Archive layout, run-id scheme and manifest tooling are documented in
+[`docs/DATA.md`](docs/DATA.md); training results in [`docs/TRAINING.md`](docs/TRAINING.md) and the
+figure inventory in [`docs/FIGURES.md`](docs/FIGURES.md).
 
 ## Environment and data
 
@@ -70,20 +77,26 @@ Dependency declarations, including the PyTorch CPU/CUDA index, are provided in `
 
 ### Included and external data
 
-**Included in the package**
+**Included in the repository**
 
-- Verified tables: `inputs/figures/`, `inputs/evidence/`, `inputs/evaluation/`, `inputs/supplementary/`.
-- Catchment attributes: `inputs/caravan_671_attributes.csv`.
-- E2 teacher: `inputs/teacher_s0/`.
-- Small arrays under `data/`: `gage_id`, `camels_dates`, and `basin_groups`.
+- Code only: `train/`, `evaluate/`, `plots/`, `tools/`, `configs/`, `tests/`, and the small arrays
+  under `data/` (`gage_id`, `camels_dates`, `basin_groups`).
 
-**Not included because of size**
+**Held in the external data archive** (`FLEXMOPEX_DATA_ROOT`)
 
-| External input | Expected contents |
+| Archive path | Contents |
 | :-- | :-- |
-| `data/camels_dataset` | Prepared CAMELS-US pickle plus `gage_id.npy` and `camels_dates.npy` |
-| `inputs/trained/` | Archived runs, checkpoints, and scored windows |
-| `inputs/synthetic/` | Scenario datasets, including `dataset.pkl` and `evaluator_archive.npz` |
+| `experiments/` | 184 training runs in six families — `normal`, `loro`, `lopo`, `ablation_nmul`, `ablation_lambda`, `synthetic` — plus the archived E2 teacher |
+| `analysis/tables/` | 30 canonical CSV tables; every manuscript/SI number and every SI figure reads these |
+| `analysis/derived/` | per-basin derived tables: counterfactual `ΔJ`, fixed-off and LOPO losses, Task-3 seasonal tables, per-run summaries |
+| `analysis/static/` | attribute matrices (`camels_attributes.npy`, `caravan_671_attributes.csv`) |
+| `analysis/figures_inputs/` | figure-ready CSV/JSON/GPKG exports |
+| `figures/{main,supplementary}/` | rendered figures (600 dpi PNG, plus vector PDF for the SI) |
+| `archive/` | frozen SI evidence bundle |
+
+The archive also ships `RUN_INDEX.csv` (one row per run: id, family, seed, selected epoch,
+checkpoint presence) and `MANIFEST.csv` (one row per file); both are regenerated with
+`python tools/build_data_manifest.py`.
 
 The prepared CAMELS-US bundle contains:
 
@@ -93,13 +106,13 @@ streamflow  (671, 12418, 1)
 attributes  (671,    35)
 ```
 
-Consult `data/README.md` and `inputs/README.md` for exact schemas, shapes, archive layouts, and the scripts that consume each item. External paths can be configured without editing source code:
+Exact schemas, shapes and archive layouts are documented in [`docs/DATA.md`](docs/DATA.md). Paths are configured without editing source code:
 
 | Environment variable | External resource |
 | :-- | :-- |
-| `FLEXMOPEX_DATA_DIR` | CAMELS dataset location |
-| `FLEXMOPEX_TEACHER_DIR` | Teacher model location |
-| `FLEXMOPEX_SYNTHETIC_CKPTS` | Synthetic learner checkpoints |
+| `FLEXMOPEX_DATA_ROOT` | root of the data archive (runs, tables, figures) |
+| `FLEXMOPEX_TEACHER_DIR` | teacher checkpoint override (defaults into the archive) |
+| `FLEXMOPEX_SYNTHETIC_CKPTS` | synthetic learner checkpoints override |
 
 ## Model formulation
 
@@ -339,7 +352,8 @@ The two gradient paths are isolated:
 | `Flex` | Learned from catchment attributes |
 | Regional / LORO | One of seven regions is held out; models are refitted |
 
-Training refuses a non-empty output directory and refuses to write training runs inside `inputs/`.
+Training refuses a non-empty output directory and refuses to write runs inside the repository's
+`data/` tree; run directories belong in the archive (`$FLEXMOPEX_DATA_ROOT/experiments/...`).
 
 ### Synthetic experiments
 
@@ -378,7 +392,7 @@ python train/synthetic/generate.py \
 Generate the E2 variant with the first-submission S0 teacher:
 
 ```bash
-FLEXMOPEX_TEACHER_DIR=inputs/teacher_s0 \
+FLEXMOPEX_TEACHER_DIR="$FLEXMOPEX_DATA_ROOT/experiments/teacher_e2_s0/seed_42" \
 python train/synthetic/generate.py \
     --out /path/to/synthetic-data \
     --scenarios A \
@@ -410,14 +424,16 @@ python evaluate/rescore_synthetic.py \
 ### Analysis scripts
 
 ```bash
-python evaluate/skill.py --out /path/to/3_1.csv
-python evaluate/detectability.py --out /path/to/tables
-python evaluate/attribute_auc.py --out /path/to/attributes
-python evaluate/removal.py --output /path/to/removal
-python evaluate/regional.py --output /path/to/regional
-python evaluate/regional_intervals.py --output /path/to/intervals.csv
+python evaluate/skill_normal.py          --out /path/to/3_1.csv
+python evaluate/evidence_normal.py       --out /path/to/evidence
+python evaluate/synthetic_detectability.py --out /path/to/tables
+python evaluate/attributes_synthetic.py  --out /path/to/attributes
+python evaluate/attributes_normal.py     --out /path/to/attributes-normal
+python evaluate/removal_lopo.py          --output /path/to/removal
+python evaluate/regional_loro.py         --output /path/to/regional
+python evaluate/regional_loro_intervals.py --output /path/to/intervals.csv
 
-python evaluate/fixed_off.py \
+python evaluate/removal_fixed_off.py \
     --seed 42 \
     --device cuda:0 \
     --output /path/to/fixed_off.csv \
@@ -427,16 +443,16 @@ python evaluate/fixed_off.py \
 ### Figures
 
 ```bash
-# One figure
-python plots/main/fig4_prediction.py \
-    --data inputs/figures \
-    --out /path/to/figures
+# Main figures 3-10 (reads analysis/figures_inputs, writes figures/main)
+bash plots/main/run_all.sh
+python plots/main/render_main_figures.py --only attr
 
-# Main figure batch
-OUT=/path/to/figures plots/main/run_all.sh
+# Supporting Information figures S1-S7 (reads analysis/tables)
+bash plots/supplementary/run_all.sh
+python plots/supplementary/fig_s4_flow_regime.py      # one figure
 
-# Supplementary figure batch
-OUT=/path/to/supplementary plots/supplementary/run_all.sh
+# Refresh the archive manifests (RUN_INDEX.csv + MANIFEST.csv)
+python tools/build_data_manifest.py
 ```
 
 Figures 5 and 10 are unapproved previews. They are skipped in the batch commands unless `PREVIEWS=1` is set.
@@ -449,19 +465,20 @@ Each result block has a dedicated analysis script. The table preserves the paper
 
 | Paper result | Script | Calculation and reference |
 | :-- | :-- | :-- |
-| **3.1 — Skill** | `evaluate/skill.py` | Cross-basin medians for each seed and four alternative aggregations. Paired Flex−Full comparison: mean over seeds per basin, median over basins, 2,000 basin bootstrap draws (seed `20261106`). |
-| **3.2 — Detectability** | `evaluate/detectability.py` | Among true-ON basins, high ($\Delta J>P_p$), weak ($0\le\Delta J\le P_p$), and negative ($\Delta J<0$) strata; recall for $w>0.5$. |
-| **3.3 — Scenario contrast** | `evaluate/detectability.py` | Rule minus random scenario: balanced accuracy and AUC per seed, averaged over seeds; 2,000 basin resamples of 135 holdout basins. |
-| **3.4 — Evidence / regional** | `evaluate/evidence.py`, `regional.py`, `regional_intervals.py` | Three-seed classes `decisive_open`, `decisive_closed`, and `uncertain` require consistent seed signs and $|\mathrm{median}(\Delta J)|>\mathrm{SD}$. LORO versus Full-data class: balanced accuracy; region-stratified bootstrap, 1,000 draws (seed `20260516`). |
-| **3.4 — Attribute AUC** | `evaluate/attribute_auc.py` | Held-out gate predicts the Full-data decisive class as a continuous score; 1,000 stratified resamples (seed `20260521`); single-class regions produce `NaN`. |
-| **3.5 — Fixed-off** | `evaluate/fixed_off.py` | Replay frozen Full checkpoints, set one gate to 0 and the other three to 1, keep parameters and routing fixed; compute per-basin NSE/KGE losses. |
-| **3.5 — Process removal** | `evaluate/removal.py` | Compare fixed-off and independently refitted LOPO using three-seed basin means, group medians, ON−OFF differences of medians, and paired Fixed−LOPO differences; 2,000 basin resamples (seed `20261106`). |
+| **3.1 — Skill** | `evaluate/skill_normal.py` | Cross-basin medians for each seed and four alternative aggregations. Paired Flex−Full comparison: mean over seeds per basin, median over basins, 2,000 basin bootstrap draws (seed `20261106`). |
+| **3.2 — Detectability** | `evaluate/synthetic_detectability.py` | Among true-ON basins, high ($\Delta J>P_p$), weak ($0\le\Delta J\le P_p$), and negative ($\Delta J<0$) strata; recall for $w>0.5$. |
+| **3.3 — Scenario contrast** | `evaluate/synthetic_detectability.py` | Rule minus random scenario: balanced accuracy and AUC per seed, averaged over seeds; 2,000 basin resamples of 135 holdout basins. |
+| **3.4 — Evidence / regional** | `evaluate/evidence_normal.py`, `regional_loro.py`, `regional_loro_intervals.py` | Three-seed classes `decisive_open`, `decisive_closed`, and `uncertain` require consistent seed signs and $|\mathrm{median}(\Delta J)|>\mathrm{SD}$. LORO versus Full-data class: balanced accuracy; region-stratified bootstrap, 1,000 draws (seed `20260516`). |
+| **3.4 — Attribute AUC** | `evaluate/attributes_synthetic.py` | Held-out gate predicts the Full-data decisive class as a continuous score; 1,000 stratified resamples (seed `20260521`); single-class regions produce `NaN`. |
+| **3.5 — Fixed-off** | `evaluate/removal_fixed_off.py` | Replay frozen Full checkpoints, set one gate to 0 and the other three to 1, keep parameters and routing fixed; compute per-basin NSE/KGE losses. |
+| **3.5 — Process removal** | `evaluate/removal_lopo.py` | Compare fixed-off and independently refitted LOPO using three-seed basin means, group medians, ON−OFF differences of medians, and paired Fixed−LOPO differences; 2,000 basin resamples (seed `20261106`). |
 
-**Evaluation boundary:** Among the listed analyses, only `evaluate/fixed_off.py` forwards the model; the other scripts read frozen artifacts. All scripts write to new destinations and refuse overwrites.
+**Evaluation boundary:** Among the listed analyses, only `evaluate/removal_fixed_off.py` forwards the model; the other scripts read frozen artifacts. All scripts write to new destinations and refuse overwrites.
 
 ### Figure scripts and status
 
-- **Main figures:** `plots/main/fig3_study_area.py` through `fig10_removal.py` follow the current candidate numbering. The study-area figure's final number has not been confirmed against the manuscript.
+- **Main figures:** `plots/main/render_main_figures.py` draws Figures 3-10 in one pass (or one at a
+  time with `--only <key>`); the study-area panel uses the archived region and state layers.
 - **Supplementary candidates:** `plots/supplementary/fig_attributes.py` and `plots/supplementary/fig_refit.py`.
 - **Outstanding figure checks:** Figures 5 and 10 are awaiting approval; Figure 7 reproduces verified classes but not the candidate raster pixel for pixel.
 

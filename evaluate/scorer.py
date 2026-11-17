@@ -46,9 +46,12 @@ from sklearn.neighbors import KNeighborsClassifier
 # --------------------------------------------------------------------------------------
 HERE = Path(__file__).resolve()
 ROOT = HERE.parents[1]  # evaluate/<file> -> package root
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+import paths  # noqa: E402
 FLEX = ROOT / "train"
 REV = FLEX / "revision1"
-S2_DIR = ROOT / "inputs" / "synthetic"
+S2_DIR = paths.EXPERIMENTS / "synthetic" / "dataset"
 STAT_DIR = ROOT / "outputs" / "scoring"
 ANALYSIS_DIR = REV / "analysis"
 
@@ -60,7 +63,7 @@ S2_MANIFEST_PATH = S2_DIR / "S2_DATA_MANIFEST.json"
 GAGE_ID_PATH = ROOT / "data/gage_id.npy"
 DATES_PATH = ROOT / "data/camels_dates.npy"
 SOURCE_DATASET_PATH = ROOT / "data/camels_dataset"
-CONFIG_PATH = ROOT / "inputs/trained/normal/flex/ref/seed_42/config_snapshot.json"
+CONFIG_PATH = paths.normal("flex", 42) / "config_snapshot.json"
 HYDRO_LOADER_SOURCE = __import__("dmg.core.data.loaders.hydro_loader", fromlist=["x"]).__file__
 NSE_CACHE_ROOT = Path("/tmp/r1_019_stat_fold_cache")  # in-repo caches are refused by fold.py
 

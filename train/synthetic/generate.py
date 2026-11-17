@@ -17,13 +17,14 @@ import pandas as pd
 import torch
 
 ROOT = Path(__file__).resolve().parents[2]
+import paths  # noqa: E402
 sys.path.insert(0, str(ROOT))
 
 from train.synthetic.support import load_teacher, prepare_dataset, simulate_gate_batch
 from train.synthetic.strict.trainer import PROCESS_ORDER, PROCESS_COSTS
 
 HERE = Path(__file__).resolve().parent
-S2_DIR = ROOT / "inputs" / "synthetic"
+S2_DIR = paths.EXPERIMENTS / "synthetic" / "dataset"
 
 
 def _rel(p) -> str:
@@ -50,7 +51,7 @@ SPEC_PATH = HERE / "truth_specification.json"
 # v2: the teacher is this retrain's Normal-Full/seed42 run, not the legacy paper tree.
 # Overridable so the dependency can be re-pointed without editing the generator.
 TEACHER_DIR = Path(os.environ.get(
-    "FLEXMOPEX_TEACHER_DIR", str(ROOT / "inputs/trained/normal/full/ref/seed_42")))
+    "FLEXMOPEX_TEACHER_DIR", str(paths.normal("full", 42))))
 TEACHER_CFG_PATH = TEACHER_DIR / "config_snapshot.json"
 TEACHER_CKPT_PATH = TEACHER_DIR / "model/best_checkpoint.pt"
 TEACHER_NORM_PATH = TEACHER_DIR / "model/normalization_statistics.json"
@@ -89,7 +90,7 @@ def parse_cli() -> None:
     ap.add_argument("--run-label", type=str, default="v1.1_frozen")
     ap.add_argument("--teacher-dir", type=str, default=None,
                     help="teacher run directory (default: the released Full seed-42 run; use "
-                         "inputs/teacher_s0 with --teacher-aprime for E2)")
+                         "experiments/teacher_e2_s0/seed_42 with --teacher-aprime for E2)")
     ap.add_argument("--out", type=str, required=True,
                     help="output root; datasets are written to <out>/data/scenario_<S>/")
     ap.add_argument("--teacher-aprime", action="store_true",
