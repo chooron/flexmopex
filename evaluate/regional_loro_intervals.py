@@ -11,8 +11,8 @@ import paths  # noqa: E402
 INPUT = paths.DERIVED / 'evidence' / 'rf_loro_classes_fullref_verified.csv'
 def main():
  parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
- inputs=Path(__file__).resolve().parents[1]/'inputs';target=args.output.resolve()
- protected=[inputs.resolve()]
+ target=args.output.resolve()
+ protected=[paths.ANALYSIS.resolve()]
  if any(target==base or base in target.parents for base in protected):raise ValueError('output overlaps inputs')
  d=pd.read_csv(INPUT); rng=np.random.default_rng(20260516); rows=[]
  code={'decisive_closed':0,'uncertain':1,'decisive_open':2}

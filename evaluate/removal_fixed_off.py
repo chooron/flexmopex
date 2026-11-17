@@ -12,7 +12,11 @@ from train.run_model import _build_data_loader,FlexMopexSampler
 from train.local_model_handler import FlexMopexModelHandler
 from train.models.mopex import mopex_step
 from dmg.core.calc.metrics import Metrics
-ROOT=V2/'inputs'/'trained'/'normal'/'full'/'ref'
+import sys
+from pathlib import Path as _P
+sys.path.insert(0, str(_P(__file__).resolve().parents[1]))
+import paths  # noqa: E402
+ROOT=paths.NORMAL / 'full' / 'ref'  # script appends seed_{n}
 PROC=('phen','int','snow','sub')
 
 def sha(p):
@@ -46,7 +50,7 @@ def main():
  cfg=json.loads((run/'config_snapshot.json').read_text());assert cfg['model']['phy']['name']==['FixedWeightMopex']
  assert cfg['model']['phy']['interception_semantics']=='RF_S0'
  cfg.update(device=a.device,dtype=torch.float32,mode='test',model_dir=str(run/'model'))
- cfg['test']['test_epoch']=0;cfg['observations']['data_path']=str(V2/'data/camels_dataset');cfg['observations']['gage_info']=str(V2/'data/gage_id.npy');cfg['basin_manifest']=str(V2/'data/gage_id.npy');cfg['model']['phy']['disable_compile']=not a.compiled
+ cfg['test']['test_epoch']=0;cfg['observations']['data_path']=str(paths.CAMELS_DATASET);cfg['observations']['gage_info']=str(paths.REPO_ROOT/'data/gage_id.npy');cfg['basin_manifest']=str(paths.REPO_ROOT/'data/gage_id.npy');cfg['model']['phy']['disable_compile']=not a.compiled
  assert (run/'model/normalization_statistics.json').is_file()
  m=FlexMopexModelHandler(cfg,device=a.device);dpl=next(iter(m.model_dict.values()));dpl.load_state_dict(torch.load(ck,map_location=a.device,weights_only=True),strict=True);dpl.eval();phy=dpl.phy_model
  import inspect

@@ -41,7 +41,21 @@ V2 = REPO
 S2DATA = paths.EXPERIMENTS / "synthetic" / "dataset"
 RESULTS = paths.EXPERIMENTS
 CKPT_ROOT = Path(os.environ.get("FLEXMOPEX_SYNTHETIC_CKPTS",
-                                str(paths.EXPERIMENTS / "synthetic" / "checkpoints")))
+                                str(paths.SYNTHETIC / "checkpoints")))
+# The archive groups every synthetic family under one folder named after its experiment id
+# (e1 … e5, mdf, sdf); the legacy family names are mapped onto those folders.
+FAMILY_DIR = {"synthetic": "e1", "synthetic_e1": "e1", "synthetic_e2": "e2",
+              "synthetic_e3": "e3", "synthetic_e4": "e4", "synthetic_e5": "e5",
+              "synthetic_mdf": "mdf", "synthetic_sdf": "sdf"}
+
+
+def family_root(family: str) -> Path:
+    """Learner checkpoints first (they carry summary.json + best_checkpoint.pt), then the
+    gate-only run directories under experiments/synthetic/<experiment>."""
+    legacy = CKPT_ROOT / family
+    if (legacy / "..").exists() and legacy.is_dir() and any(legacy.rglob("best_checkpoint.pt")):
+        return legacy
+    return paths.SYNTHETIC / FAMILY_DIR.get(family, family)
 SCORER = REPO / "evaluate/scorer.py"
 sys.path.insert(0, str(REPO))
 FLEX_CFG = RESULTS / "normal/flex/ref/seed_42/config_snapshot.json"
@@ -157,7 +171,7 @@ def build_context(m, scenario: str, cache_root: Path):
 def discover_runs() -> list[dict]:
     runs = []
     for family in FAMILIES:
-        for summary in sorted((CKPT_ROOT / family).rglob("summary.json")):
+        for summary in sorted(family_root(family).rglob("summary.json")):
             d = json.loads(summary.read_text())
             run_id = d["run_id"]
             scenario = d["scenario"]

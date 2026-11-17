@@ -5,7 +5,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-LA = Path(__file__).resolve().parents[1] / 'inputs' / 'evaluation'
+import sys
+from pathlib import Path as _P
+sys.path.insert(0, str(_P(__file__).resolve().parents[1]))
+import paths  # noqa: E402
+LA = paths.DERIVED / 'evaluation'
 OUT = None
 
 def save(df,name):

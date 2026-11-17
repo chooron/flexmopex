@@ -15,12 +15,14 @@ flexmopex-revision1/
 │   ├── ablation_nmul/{flex/nmul{1,2,8,16,32},full/nmul{1,2}}/seed_{42,43,44}
 │   ├── ablation_lambda/flex/lam{0.0005 … 0.1}/seed_{42,43,44}
 │   ├── synthetic/{e1,e2,e3,e4,e5,mdf,sdf}/<scenario>/seed_{42,43,44}
-│   │                holdout_eval/  nse_tables/  dataset/
+│   │                holdout_eval/  nse_tables/  dataset/  checkpoints/
 │   └── teacher_e2_s0/seed_42      archived E-S0 teacher (config + checkpoint)
 ├── analysis/
 │   ├── tables/                   30 canonical CSVs (the manuscript/SI tables)
 │   ├── derived/{evidence,evaluation,ablation_tables,seasonal_task3,run_summaries,counterfactual}
-│   ├── static/                   attribute matrices (camels_attributes.npy, caravan_671_attributes.csv)
+│   ├── static/                   attribute matrices + the CAMELS bundle
+│   │                             (camels_dataset 255 MB, camels_dates.npy, camels_attributes.npy,
+│   │                              caravan_671_attributes.csv)
 │   └── figures_inputs/           figure-ready CSV/JSON/gpkg exports
 ├── figures/{main,supplementary}/ rendered PNG (+PDF for the SI)
 └── archive/                      frozen SI evidence zip and earlier statistics bundles

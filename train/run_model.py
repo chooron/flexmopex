@@ -30,6 +30,8 @@ for path in (REPO_ROOT, PROJECT_DIR):
     if path_str not in sys.path:
         sys.path.insert(0, path_str)
 
+import paths  # noqa: E402  (the repository root is on sys.path from here on)
+
 
 from train.my_trainer import MyTrainer  # noqa: E402
 from train import get_env_path, load_config  # noqa: E402
@@ -587,6 +589,13 @@ def apply_runtime_overrides(
 
 def _build_data_loader(config: dict[str, Any]):
     loader_config = copy.deepcopy(config)
+    # the CAMELS bundle lives in the external archive; fall back to it when the run's
+    # relative path does not resolve inside the repository
+    obs = loader_config.setdefault("observations", {})
+    if obs.get("data_path") and not Path(str(obs["data_path"])).is_file():
+        obs["data_path"] = str(paths.CAMELS_DATASET)
+    if obs.get("gage_info") and not Path(str(obs["gage_info"])).is_file():
+        obs["gage_info"] = str(REPO_ROOT / "data/gage_id.npy")
     loader_config["device"] = "cpu"
     data_loader_cls = import_data_loader(config["data_loader"])
     data_loader = data_loader_cls(loader_config, test_split=True, overwrite=False)

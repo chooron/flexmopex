@@ -10,15 +10,18 @@ import sys
 sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parent))
 from evidence_normal import classify
 
-LA = Path(__file__).resolve().parents[1] / 'inputs' / 'evidence'
+import sys
+from pathlib import Path as _P
+sys.path.insert(0, str(_P(__file__).resolve().parents[1]))
+import paths  # noqa: E402
+LA = paths.DERIVED / 'evidence'
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     target = args.output.resolve()
-    inputs = Path(__file__).resolve().parents[1] / 'inputs'
-    protected = [inputs.resolve()] + [(inputs / p).resolve() for p in ('evidence', 'trained', 'synthetic')]
+    protected = [paths.ANALYSIS.resolve()]
     if any(target == base or base in target.parents for base in protected):
         raise ValueError('output overlaps inputs')
     if args.output.exists() and any(args.output.iterdir()):

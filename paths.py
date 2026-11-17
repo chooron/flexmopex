@@ -39,6 +39,10 @@ FIG_INPUTS = ANALYSIS / "figures_inputs"
 FIGURES = DATA_ROOT / "figures"
 
 # ---- experiment families (see docs/DATA.md for the run_id naming scheme) ----
+# raw model input (archived once, 255 MB): CAMELS-US pickle + date axis
+CAMELS_DATASET = STATIC / "camels_dataset"
+CAMELS_DATES = STATIC / "camels_dates.npy"
+
 NORMAL = EXPERIMENTS / "normal"
 LORO = EXPERIMENTS / "loro"
 LOPO = EXPERIMENTS / "lopo"

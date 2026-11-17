@@ -11,18 +11,18 @@ bash plots/supplementary/run_all.sh   # Figures S1-S7 -> $FLEXMOPEX_DATA_ROOT/fi
 
 ## Main text (`plots/main/`)
 
-| Figure | Script | Data |
+| Figure | Script (one module per figure) | Data |
 |---|---|---|
-| 3 study area | `render_main_figures.py --only study` | `analysis/figures_inputs/{catchments.csv,regions.gpkg,states.gpkg}` |
-| 4 prediction | `--only prediction` | `fig3_catchment_nse.csv`, `fig3_summary.json` |
-| 5 detectability & recovery | `--only detect` | `fig4_scatter.csv`, `fig4_recall.csv`, `fig4_meta.json` |
-| 6 scenario recovery & transfer | `--only transfer` | `fig5_recovery.csv` |
-| 7 evidence maps | `--only evidence` | `fig6_evidence.csv` + GIS layers |
-| 8 attribute associations | `--only attr` | `attr_corr.csv` (= `analysis/tables/Figure8_and_S2_*.csv`) |
-| 9 regional exclusion | `--only regional` | `fig7_regional.csv` |
-| 10 process removal | `--only removal` | `fig8_scatter.csv`, `fig8_contrast.csv`, `fig8_meta.json` |
+| 3 study area | `plots/main/fig03_study_area.py` | `analysis/figures_inputs/{catchments.csv,regions.gpkg,states.gpkg}` |
+| 4 prediction | `plots/main/fig04_prediction.py` | `fig3_catchment_nse.csv`, `fig3_summary.json` |
+| 5 detectability & recovery | `plots/main/fig05_detectability_recovery.py` | `fig4_scatter.csv`, `fig4_recall.csv`, `fig4_meta.json` |
+| 6 scenario recovery & transfer | `plots/main/fig06_transfer.py` | `fig5_recovery.csv` |
+| 7 evidence maps | `plots/main/fig07_evidence_maps.py` | `fig6_evidence.csv` + GIS layers |
+| 8 attribute associations | `plots/main/fig08_attribute_relationships.py` | `attr_corr.csv` (= `analysis/tables/Figure8_and_S2_*.csv`) |
+| 9 regional exclusion | `plots/main/fig09_regional_exclusion.py` | `fig7_regional.csv` |
+| 10 process removal | `plots/main/fig10_process_removal.py` | `fig8_scatter.csv`, `fig8_contrast.csv`, `fig8_meta.json` |
 
-Shared style: `plots/figstyle.py`. Panel geometry is set at print size, so the font sizes in the
+Shared style and geometry helpers: `plots/figstyle.py` and `plots/main/_common.py`. Panel geometry is set at print size, so the font sizes in the
 style sheet are the sizes that appear on the page.
 
 ## Supporting Information (`plots/supplementary/`)

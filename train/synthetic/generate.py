@@ -17,6 +17,8 @@ import pandas as pd
 import torch
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 import paths  # noqa: E402
 sys.path.insert(0, str(ROOT))
 
