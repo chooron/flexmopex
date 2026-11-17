@@ -54,7 +54,7 @@ def _darken(hex_colour: str, f: float) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", type=Path, default=paths.TABLES)
+    ap.add_argument("--data", type=Path, default=paths.TABLES / "figure_inputs")
     ap.add_argument("--out", type=Path, default=paths.FIGURES / "supplementary")
     a = ap.parse_args()
 
