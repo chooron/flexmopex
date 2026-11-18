@@ -102,11 +102,12 @@ def map_extent(outline, padx=0.01, pady=0.02):
     return (xmin - dx, xmax + dx, ymin - dy, ymax + dy)
 
 
-def draw_base(ax, regions, states, outline, region_lw=0.9, extent=None):
+def draw_base(ax, regions, states, outline, region_lw=0.9, extent=None,
+              region_color="#2E2E2E"):
     """Light land fill, thin state lines, dark region boundaries."""
     gpd.GeoSeries([outline], crs=CRS).plot(ax=ax, color="#F4F4F4", edgecolor="none", zorder=0)
     states.boundary.plot(ax=ax, color="#D6D6D6", lw=0.3, zorder=1)
-    regions.boundary.plot(ax=ax, color="#2E2E2E", lw=region_lw, zorder=3)
+    regions.boundary.plot(ax=ax, color=region_color, lw=region_lw, zorder=3)
     x0, x1, y0, y1 = extent or map_extent(outline)
     ax.set_xlim(x0, x1)
     ax.set_ylim(y0, y1)
