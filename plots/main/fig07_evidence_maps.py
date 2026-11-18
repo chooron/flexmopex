@@ -99,10 +99,13 @@ def fig6(data_dir, out_dir, layers):
                 bx.text(left + wdt / 2, y, f"{counts[k]}", ha="center", va="center",
                         fontsize=9.6, color="white" if k == "ON" else "#1A1A1A", zorder=3)
             elif wdt > 0.0:
-                # too narrow for an inline count: place it just outside and point at the block
-                bx.plot([left + wdt + 0.006, left + wdt + 0.028], [y, y], ls=(0, (1.0, 1.8)),
-                        color="#4A4A4A", lw=1.0, zorder=4, solid_capstyle="butt")
-                bx.text(left + wdt + 0.034, y, f"{counts[k]}", ha="left", va="center",
+                # too narrow for an inline count: dot at the block centre, solid leader to the number
+                cx = left + wdt / 2
+                bx.plot([cx], [y], marker="o", ms=2.9, mfc="white", mec="#1A1A1A", mew=0.7,
+                        zorder=6, clip_on=False)
+                bx.plot([cx, left + wdt + 0.026], [y, y], color="#4A4A4A", lw=0.9, zorder=5,
+                        solid_capstyle="butt", clip_on=False)
+                bx.text(left + wdt + 0.032, y, f"{counts[k]}", ha="left", va="center",
                         fontsize=9.6, color="#1A1A1A", zorder=4)
             left += wdt
     bx.set_xlim(0, 1)
