@@ -54,7 +54,7 @@ def fig6(data_dir, out_dir, layers):
     ext = (ext[0], ext[1], ext[2] + trim, ext[3] - trim)
     mh = mw * (ext[3] - ext[2]) / (ext[1] - ext[0])
     row_gap = 0.02          # (a)(b) / (c)(d) gap: title band only, tight grid
-    band = 0.60             # blank band between (c)(d) and panel (e)
+    band = 0.44             # blank band between (c)(d) and panel (e)
     bar_h = 1.32            # panel (e) height: +29 % vs the previous 1.02 in
     xlab_h = 0.40           # tick labels + axis title below the bars
     H = 2 * (MAP_TITLE_H + mh) + row_gap + band + bar_h + xlab_h + 2 * MAP_MARGIN
@@ -95,10 +95,15 @@ def fig6(data_dir, out_dir, layers):
             wdt = counts[k] / total
             bx.add_patch(Rectangle((left, y - 0.37), wdt, 0.74, facecolor=CLS[k],
                                    edgecolor="white", lw=0.8, zorder=2))
-            if wdt > 0.0:
+            if wdt >= 0.05:
                 bx.text(left + wdt / 2, y, f"{counts[k]}", ha="center", va="center",
-                        fontsize=9.6 if wdt > 0.05 else 7.0,
-                        color="white" if k == "ON" else "#1A1A1A", zorder=3)
+                        fontsize=9.6, color="white" if k == "ON" else "#1A1A1A", zorder=3)
+            elif wdt > 0.0:
+                # too narrow for an inline count: place it just outside and point at the block
+                bx.plot([left + wdt + 0.006, left + wdt + 0.028], [y, y], ls=(0, (1.0, 1.8)),
+                        color="#4A4A4A", lw=1.0, zorder=4, solid_capstyle="butt")
+                bx.text(left + wdt + 0.034, y, f"{counts[k]}", ha="left", va="center",
+                        fontsize=9.6, color="#1A1A1A", zorder=4)
             left += wdt
     bx.set_xlim(0, 1)
     bx.set_ylim(-0.55, len(procs) - 0.45)
