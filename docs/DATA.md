@@ -6,8 +6,8 @@ place that resolves it.
 
 ```text
 flexmopex-revision1/
-├── RUN_INDEX.csv                 one row per training run (184)
-├── MANIFEST.csv                  one row per file (29,013 files, 12.3 GB)
+├── RUN_INDEX.csv                 source run-directory inventory (includes auxiliary directories)
+├── MANIFEST.csv                  full-workspace file inventory
 ├── experiments/
 │   ├── normal/{flex,full}/ref/seed_{42,43,44}
 │   ├── loro/{flex,full}/region{0..6}/seed_{42,43,44}
@@ -18,7 +18,7 @@ flexmopex-revision1/
 │   │                holdout_eval/  nse_tables/  dataset/  checkpoints/
 │   └── teacher_e2_s0/seed_42      archived E-S0 teacher (config + checkpoint)
 ├── analysis/
-│   ├── tables/                   30 canonical CSVs (the manuscript/SI tables)
+│   ├── tables/                   publication CSVs and figure_inputs/ backing tables
 │   ├── derived/{evidence,evaluation,ablation_tables,seasonal_task3,run_summaries,counterfactual}
 │   ├── static/                   attribute matrices + the CAMELS bundle
 │   │                             (camels_dataset 255 MB, camels_dates.npy, camels_attributes.npy,
@@ -30,7 +30,9 @@ flexmopex-revision1/
 
 ## Run-id scheme
 
-`RUN_INDEX.csv` gives every run a self-describing id; `paths.py` exposes the matching accessors.
+`RUN_INDEX.csv` is the source run-directory inventory; auxiliary evaluation and checkpoint
+folders can appear alongside training runs. Its row count is not the number of independent
+experiments. `paths.py` exposes the matching directory accessors.
 
 | Family | run_id pattern | accessor |
 |---|---|---|
@@ -71,3 +73,25 @@ python tools/build_data_manifest.py --sha    # add sha256 per file (slow, ~12 GB
 The archive was assembled from the training server's result tree (RF_S0 V2 runs) and the local
 `results/ablation` re-run; the frozen evidence bundle in `archive/` remains the immutable source
 record for the SI numbers.
+
+## Reduced Zenodo upload bundles
+
+`python tools/package_zenodo.py --plan` reports the selection without writing ZIPs. Run the same
+command without `--plan` to create `archive/flexmopex-code.zip` and `archive/flexmopex-data.zip`.
+Existing ZIPs are never overwritten implicitly.
+
+* The code ZIP is a snapshot of the current working-tree code, the latest canonical rendered
+  Figures 3–10 and S1–S7, and the final publication-table exports. It excludes Git internals,
+  caches, credentials, and historical writing bundles. Figure S2 uses the approved frozen PNG.
+* The data ZIP contains only selected (`best_checkpoint.pt`) model weights, training
+  configurations, selected-epoch records, loss histories, normalization metadata, and final
+  training/test metrics. It excludes daily runoff/gate arrays, raw datasets, derived analysis
+  products, counterfactual exports, per-epoch diagnostics/checkpoints, redundant final/last
+  checkpoints, worker logs, and unused matched-Full multiplicity controls.
+* These deliberately reduced bundles are not the full workspace above. Re-running training,
+  counterfactual analyses, or table-driven figure rendering requires the separately obtained
+  original inputs; they are not included in the upload. The rendered figures and publication
+  tables are retained as final outputs, not newly revalidated statistical results.
+* Each ZIP contains its own file-size/SHA-256 manifest and scope README. A checkpoint index
+  identifies the weights actually included in the data ZIP. No Zenodo publication is performed
+  by the packaging command.

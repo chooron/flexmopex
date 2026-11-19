@@ -39,7 +39,7 @@ def fig_attr(data_dir, out_dir, ntop=6):
     ac = _read(data_dir, "attr_corr.csv")
     procs = [p for p in S.PROC if p in set(ac.process)]
     nat = ac.attribute.nunique()
-    lab_w, gap_c, axw = 1.48, 0.10, None
+    lab_w, gap_c, axw = 1.48, 0.02, None
     ncol = 2
     axw = (W - ncol * lab_w - 0.12 - (ncol - 1) * gap_c) / ncol
     row_h, top_m, row_gap, bot_m = 0.165, 0.40, 0.30, 0.42
@@ -78,14 +78,14 @@ def fig_attr(data_dir, out_dir, ntop=6):
         if r == nrow - 1:
             ax.set_xlabel("Spearman $\\rho$ with attribute")
         S.panel_title(ax, "abcdefgh"[i], S.PROC_LABEL[p], x=-0.02, y=1.0)
-    h = [Patch(color="#555555", label=f"$\\rho(w_p, x)$, top {ntop} by $|\\rho|$"),
+    h = [Patch(color="#555555", label=rf"$\rho(\bar{{w}}_p, a)$, top {ntop} by $|\rho|$"),
          Line2D([], [], color="#B5B5B5", lw=1.2, label="Other attributes"),
          Line2D([], [], marker="D", ls="", mfc="white", mec="#1A1A1A", ms=4.6,
-                label=r"$\rho(q_p^{\mathrm{post}}, x)$, preference proxy")]
+                label=r"$\rho(\mathrm{median}\,\Delta J_p, a)$, median contrast")]
     # centre the legend over the panel block (label column included), not over the whole canvas
     panel_cx = (lab_w + (W - 0.12)) / 2.0 / W
     fig.legend(handles=h, loc="upper center", ncol=3, fontsize=S.FS_TICK,
-               bbox_to_anchor=(panel_cx, 1.0),
+               bbox_to_anchor=(panel_cx, 0.985),
                borderpad=0.15, borderaxespad=0.0, columnspacing=1.6)
     S.save(fig, out_dir, NAMES["attr"])
 

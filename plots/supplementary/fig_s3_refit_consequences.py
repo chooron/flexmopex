@@ -34,7 +34,7 @@ import wrrstyle as S  # noqa: E402
 
 S.apply()
 
-TICKS = [-10, -1, -0.1, 0, 0.01, 0.1, 1, 10]
+TICKS = [-10, -1, -0.1, -0.01, 0, 0.01, 0.1, 1, 10]
 
 
 def _fmt(v, _):

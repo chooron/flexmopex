@@ -82,9 +82,8 @@ def main() -> int:
     ax_a.set_ylabel("Test-period NSE")
     S.despine(ax_a)
     S.hgrid(ax_a)
-    ax_a.legend(loc="lower right", fontsize=6.3, handletextpad=0.4, borderpad=0.2,
-                labelspacing=0.28)
-    S.panel_title(ax_a, "a", "Test-period NSE", pad=5.0)
+    ax_a.legend(loc="lower left", bbox_to_anchor=(0.52, 0.025), fontsize=6.3,
+                handletextpad=0.4, borderpad=0.2, borderaxespad=0.0, labelspacing=0.28)
 
     # ---------------------------------------------------------------- (b) gates
     ax_b.axvline(4, color=S.REF, lw=0.9, ls=(0, (4, 2)), zorder=1.5)
@@ -108,7 +107,6 @@ def main() -> int:
     ax_b.set_ylabel("Learned gate $\\bar w_p$")
     S.despine(ax_b)
     S.hgrid(ax_b)
-    S.panel_title(ax_b, "b", "Learned process gates", pad=5.0)
 
     # ------------------------------------------------- (c) evidence mini-facets
     groups = np.arange(len(ms), dtype=float)
@@ -142,23 +140,22 @@ def main() -> int:
                         fontweight="bold", zorder=7)
     ax_c.text(0.5, -0.13, "Components $m$", transform=ax_c.transAxes, ha="center", va="top",
               fontsize=S.FS_LABEL)
-    fig.text(ax_c.get_position().x0, 0.858, "(c) Process-evidence classes",
-             fontsize=S.FS_TITLE, fontweight="bold", color="#1a1a1a", ha="left", va="bottom")
+    for panel, letter, title in ((ax_a, "a", "Test-period NSE"),
+                                 (ax_b, "b", "Learned process gates"),
+                                 (ax_c, "c", "Process-evidence classes")):
+        fig.text(panel.get_position().x0, 0.855, f"({letter}) {title}",
+                 fontsize=S.FS_TITLE, fontweight="bold", color=S.INK,
+                 ha="left", va="bottom")
 
-    # stacked-state key, above panel (c) and clear of the mini-facets
+    # One centered row for the process and evidence-class keys, close to the panels.
+    hl = [Line2D([], [], color=S.PROC[p], marker="o", lw=1.3, ms=3.8, label=S.NAME[p])
+          for p in S.PROCS]
     key = [Patch(color=S.INK, label="Decisive ON"),
            Patch(color=S.TINT["snow"], label="Uncertain"),
            Patch(color=OFF, label="Decisive OFF")]
-    fig.legend(handles=key, loc="upper center", bbox_to_anchor=(0.62, 0.952), ncol=3,
-               fontsize=S.FS_TICK - 0.5, handletextpad=0.3, columnspacing=0.8,
-               borderpad=0.1, handlelength=0.9, frameon=False)
-
-    # one shared process legend for (b) and (c), above the panels
-    hl = [Line2D([], [], color=S.PROC[p], marker="o", lw=1.3, ms=3.8, label=S.NAME[p])
-          for p in S.PROCS]
-    fig.legend(handles=hl, loc="upper center", bbox_to_anchor=(0.70, 0.998), ncol=4,
-               fontsize=S.FS_TICK - 0.25, handletextpad=0.35, columnspacing=1.0,
-               borderpad=0.1)
+    fig.legend(handles=hl + key, loc="upper center", bbox_to_anchor=(0.5, 0.96), ncol=7,
+               fontsize=7.0, handletextpad=0.3, columnspacing=0.9, handlelength=1.0,
+               borderpad=0.1, borderaxespad=0.0, frameon=False)
 
     S.save(fig, a.out, "fig_task1_nmul", extra_names=("FigureS6_component_multiplicity",))
     print("wrote", a.out / "FigureS6_component_multiplicity.png")

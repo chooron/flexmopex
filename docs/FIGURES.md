@@ -55,3 +55,7 @@ Two known, documented deviations:
 * `FigureS6`/`FigureS7` are also written as `fig_task1_nmul.*` / `fig_task2_lambda.*`; the two name
   pairs were byte-identical in the delivered package, and the repository keeps the `FigureS6/S7`
   names only.
+
+## Figure S3 caption clarification
+
+Panel (a) uses a symmetric logarithmic horizontal axis, with a linear region from −0.01 to 0.01.

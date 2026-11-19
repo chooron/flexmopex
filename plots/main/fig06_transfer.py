@@ -64,7 +64,7 @@ def fig5(data_dir, out_dir):
         ax.set_xticks([0, 0.25, 0.5, 0.75, 1]); ax.set_xticklabels(["0", "", "0.5", "", "1"])
         S.vgrid(ax)
         if p == "snow":
-            ax.set_xlabel("ON recall ($w$ > 0.5)")
+            ax.set_xlabel(r"ON recall ($\pi_{b,p}$ > 0.5)")
         else:
             ax.axvline(0.5, color=S.REF, lw=0.6, ls=(0, (3, 2)), zorder=1)
             ax.set_xlabel("Structural discrimination (AUC)")

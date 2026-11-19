@@ -115,11 +115,12 @@ def main() -> int:
     hl = [Line2D([], [], color=SLATE["total"], marker="o", mfc="white", mew=1.0, ms=4.0,
                  lw=1.0, label="Total loss (median, IQR)"),
           Patch(facecolor=SLATE["high"], edgecolor=S.INK, lw=0.6,
-                label="High flow ($Q$ > $P_{90}$, dark shade)"),
+                label="High flow ($Y_{b,t}$ > $P_{90}$),\n"
+                      "above the 90th observed-flow percentile"),
           Patch(facecolor=SLATE["mid"], edgecolor=S.INK, lw=0.6,
-                label="Middle flow ($P_{50}$ < $Q$ \u2264 $P_{90}$, medium shade)"),
+                label="Middle flow ($P_{50}$ < $Y_{b,t}$ \u2264 $P_{90}$, medium shade)"),
           Patch(facecolor=SLATE["low"], edgecolor=S.INK, lw=0.6,
-                label="Low flow ($Q$ \u2264 $P_{50}$, light shade)")]
+                label="Low flow ($Y_{b,t}$ \u2264 $P_{50}$, light shade)")]
     fig.legend(handles=hl, loc="upper center", bbox_to_anchor=(0.5, 0.998), ncol=2,
                fontsize=S.FS_TICK, handletextpad=0.5, columnspacing=1.6, borderpad=0.1,
                labelspacing=0.35)
